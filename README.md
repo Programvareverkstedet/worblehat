@@ -65,7 +65,7 @@ Run `poetry run worblehat --help` for more info
 - [ ] Ability to list borrowed items which are overdue
 - [~] Ability to search for items
 - [ ] Ability to print PVV-specific labels for items missing a label, or which for any other reason needs a custom one
-- [ ] Ascii art of monkey with fingers in eyes
+- [X] Ascii art of monkey with fingers in eyes
 
 ### Deadline daemon
 
