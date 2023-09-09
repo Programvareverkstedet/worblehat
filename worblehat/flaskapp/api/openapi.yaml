@@ -1,0 +1,432 @@
+openapi: 3.0.3
+info:
+  title: Worbblehat API Documentation
+  description: |-
+    This is the API documentation for the Worbblehat application.
+    It is based on the OpenAPI 3.0.3 specification.
+    The API is implemented using the Flask framework.
+  license:
+    name: MIT
+  version: 0.0.1
+
+tags:
+  - name: book
+    description: Everything about books
+  - name: bookshelf
+    description: Operations about bookshelves
+  - name: loan
+    description: Operations about loans
+
+paths:
+  /book/metadata/{isbn}:
+    get:
+      summary: Fetch a book metadata by ISBN
+      tags:
+        - book
+      parameters:
+        - name: isbn
+          in: path
+          required: true
+          description: The ISBN of the book to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The book with the specified ISBN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookMetadata'
+        '404':
+          description: Book not found
+    
+  /book/{isbn}:
+    get:
+      summary: Fetch a book from database by ISBN
+      tags:
+        - book
+      parameters:
+        - name: isbn
+          in: path
+          required: true
+          description: The ISBN of the book to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The book with the specified ISBN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '404':
+          description: Book not found
+    post:
+      summary: Add a new book to the database
+      tags:
+        - book
+      requestBody:
+        description: The book to add
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Book'
+      responses:
+        '201':
+          description: The book was successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '400':
+          description: Invalid input
+  
+  /book/move/{from_shelf_name}/{to_shelf_name}:
+    post:
+      summary: Move a book from one bookshelf to another
+      tags:
+        - book
+        - bookshelf
+      parameters:
+        - name: from_shelf_name
+          in: path
+          required: true
+          description: The name of the bookshelf to move the book from
+          schema:
+            type: string
+        - name: to_shelf_name
+          in: path
+          required: true
+          description: The name of the bookshelf to move the book to
+          schema:
+            type: string
+      requestBody:
+        description: The book to move
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Book'
+      responses:
+        '200':
+          description: The book was successfully moved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '400':
+          description: Invalid input
+        '404':
+          description: Bookshelf not found
+
+  /bookshelf:
+    get:
+      summary: Fetch all bookshelves from database
+      tags:
+        - bookshelf
+      responses:
+        '200':
+          description: All bookshelves
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookcaseShelf'
+
+  /bookshelf/{shelf_name}:
+      get:
+        summary: Fetch a bookshelf from database by name
+        tags:
+          - bookshelf
+        parameters:
+          - name: shelf_name
+            in: path
+            required: true
+            description: The name of the bookshelf to retrieve
+            schema:
+              type: string
+        responses:
+          '200':
+            description: The bookshelf with the specified name
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/BookcaseShelf'
+          '404':
+            description: Bookshelf not found
+      post:
+        summary: Add a new bookshelf to the database
+        tags:
+          - bookshelf
+        requestBody:
+          description: The bookshelf to add
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookcaseShelf'
+        responses:
+          '201':
+            description: The bookshelf was successfully added
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/BookcaseShelf'
+          '400':
+            description: Invalid input
+      
+  /bookshelf/books/{shelf_name}:
+      get:
+        summary: Fetch all books from a bookshelf
+        tags:
+          - bookshelf
+        parameters:
+          - name: shelf_name
+            in: path
+            required: true
+            description: The name of the bookshelf to retrieve
+            schema:
+              type: string
+        responses:
+          '200':
+            description: The books on the specified bookshelf
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Book'
+          '404':
+            description: Bookshelf not found
+            
+  /loan/{isbn}:
+    post:
+      summary: Borrow a book
+      tags:
+        - loan
+      parameters:
+        - name: isbn
+          in: path
+          required: true
+          description: The ISBN of the book to borrow
+          schema:
+            type: string
+      requestBody:
+        description: The user who wants to borrow the book
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: The username of the user who wants to borrow the book
+                email:
+                  type: string
+                  description: The email of the user who wants to borrow the book
+      responses:
+        '200':
+          description: The book was successfully borrowed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  loan_id:
+                    type: integer
+                    description: The id of the loan
+                  book:
+                    $ref: '#/components/schemas/Book'
+                  user:
+                    type: object
+                    properties:
+                      username:
+                        type: string
+                        description: The username of the user who borrowed the book
+                      email:
+                        type: string
+                        description: The email of the user who borrowed the book
+        '400':
+          description: Invalid input
+        '404':
+          description: Book not found
+        '409':
+          description: Book already borrowed
+    delete:
+      summary: Return a book
+      tags:
+        - loan
+      parameters:
+        - name: isbn
+          in: path
+          required: true
+          description: The ISBN of the book to return
+          schema:
+            type: string
+      requestBody:
+        description: The user who wants to return the book
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: The username of the user who wants to return the book
+                email:
+                  type: string
+                  description: The email of the user who wants to return the book
+      responses:
+        '200':
+          description: The book was successfully returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  loan_id:
+                    type: integer
+                    description: The id of the loan
+                  book:
+                    $ref: '#/components/schemas/Book'
+
+
+
+components:
+  schemas:
+    BookMetadata:
+      description: metadata of a book 
+      type: object
+      properties:
+        isbn:
+          type: string
+          description: The ISBN of the book.
+        title:
+          type: string
+          description: The title of the book.
+        authors:
+          type: array
+          items:
+            type: string
+          description: A set of authors names of the book.
+        language:
+          type: string
+          description: The language of the book.
+        publish_date:
+          type: integer
+          description: The publish date of the book.
+        num_pages:
+          type: integer
+          description: The number of pages in the book.
+        subjects:
+          type: array
+          items:
+            type: string
+          description: A set of subjects related to the book.
+
+    Author:
+      description: An author of a book
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the author.
+    Category:
+      description: A category of a book
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the category.
+        description:
+          type: string
+          description: The description of the category.
+    Language:
+      description: A language of a book
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the language.
+        iso639_1_code:
+          type: string
+          description: The iso639-1 code of the language.
+    
+    MediaType:
+      description: A media type of a book
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the media type.
+    
+    Book:
+      type: object
+      properties:
+        uid:
+          type: integer
+          format: int64
+        name:
+          type: string
+        isbn:
+          type: integer
+        owner:
+          type: string
+        amount:
+          type: integer
+        media_type:
+          $ref: '#/components/schemas/MediaType'
+        shelf:
+          $ref: '#/components/schemas/BookcaseShelf'
+        language:
+          $ref: '#/components/schemas/Language'
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+        authors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Author'
+      required:
+        - uid
+        - name
+        - isbn
+        - owner
+        - amount
+        
+    BookcaseShelf:
+      description: A bookshelf, its location
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the bookshelf.
+        description:
+          type: string
+          description: The description of the bookshelf. Like its location.
+
+# not sure if we keep this
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+          description: The username of the user.
+        email:
+          type: string
+          description: The email of the user.
+        role:
+          type: string
+          description: The role of the user.
+        loans:
+          type: array
+          items:
+            type: integer
+          description: The loan id's of the user.
+
+#maybe auth. 

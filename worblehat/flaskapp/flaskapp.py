@@ -31,6 +31,7 @@ def create_app(args: dict[str, any] | None = None):
 
     return app
 
+
 def configure_admin(app):
     admin = Admin(app, name='Worblehat', template_mode='bootstrap3')
     admin.add_view(ModelView(Author, db.session))
