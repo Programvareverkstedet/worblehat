@@ -1,9 +1,7 @@
 #base fetcher.
 from abc import ABC, abstractmethod
-from typing import Dict, Optional
-from ...models import (
-    BookMetadata,
-)
+from typing import Optional
+from worblehat.services.metadata_fetchers.BookMetadata import BookMetadata
 
 class BookMetadataFetcher(ABC):
     __metadata: BookMetadata

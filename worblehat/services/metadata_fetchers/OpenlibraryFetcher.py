@@ -5,8 +5,8 @@ from typing import Dict, Optional
 import json
 import requests
 
-from worblehat.services.metadata_fetchers.base_fetcher import BookMetadataFetcher
-from worblehat.models.BookMetadata import BookMetadata
+from worblehat.services.metadata_fetchers.BookMetadataFetcher import BookMetadataFetcher
+from worblehat.services.metadata_fetchers.BookMetadata import BookMetadata
 
 class OpenLibraryFetcher(BookMetadataFetcher):
 

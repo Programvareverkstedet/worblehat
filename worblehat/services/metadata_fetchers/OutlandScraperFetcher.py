@@ -1,12 +1,12 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 # import isbnlib
 #used these instead of isbnlib as i have already written the code for them
 import json
 import requests
 
-from worblehat.services.metadata_fetchers.base_fetcher import BookMetadataFetcher
-from worblehat.models.BookMetadata import BookMetadata
+from worblehat.services.metadata_fetchers.BookMetadataFetcher import BookMetadataFetcher
+from worblehat.services.metadata_fetchers.BookMetadata import BookMetadata
 
 class OutlandScraperFetcher(BookMetadataFetcher):
 

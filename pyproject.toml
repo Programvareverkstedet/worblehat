@@ -18,6 +18,7 @@ sqlalchemy = "^2.0.8"
 psycopg2-binary = "^2.9.6"
 requests = "^2.31.0"
 bs4 = "^0.0.1"
+thestorygraph-client = "^0.1.6"
 
 [tool.poetry.group.dev.dependencies]
 werkzeug = "^2.3.3"

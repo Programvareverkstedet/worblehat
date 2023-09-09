@@ -1,9 +1,11 @@
 import isbnlib
 
+from worblehat.services.metadata_fetchers.book_metadata_fetcher import fetcher_dict
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..models import (
+from worblehat.models import (
     Author,
     BookcaseItem,
     Language,
@@ -25,7 +27,11 @@ def is_valid_isbn(isbn: str) -> bool:
 
 
 def create_bookcase_item_from_isbn(isbn: str, sql_session: Session) -> BookcaseItem | None:
-    metadata = isbnlib.meta(isbn, 'openl')
+    # metadata = isbnlib.meta(isbn, 'openl')
+    
+    
+    metadata = fetcher_dict(isbn)
+    
     if len(metadata.keys()) == 0:
         return None
 
@@ -45,3 +51,8 @@ def create_bookcase_item_from_isbn(isbn: str, sql_session: Session) -> BookcaseI
         ).one()
 
     return bookcase_item
+
+
+# if __name__ == '__main__':
+#     item = create_bookcase_item_from_isbn('9780593678510', None)
+#     print(item)
