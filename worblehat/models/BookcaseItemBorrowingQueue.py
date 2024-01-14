@@ -21,7 +21,8 @@ if TYPE_CHECKING:
 
 class BookcaseItemBorrowingQueue(Base, UidMixin):
     username: Mapped[str] = mapped_column(String)
-    entered_queue_time = mapped_column(DateTime, default=datetime.now())
+    entered_queue_time: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
+    item_became_available_time: Mapped[datetime | None] = mapped_column(DateTime)
     expired = mapped_column(Boolean, default=False)
 
     fk_bookcase_item_uid: Mapped[int] = mapped_column(ForeignKey('BookcaseItem.uid'), index=True)

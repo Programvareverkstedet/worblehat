@@ -70,8 +70,8 @@ Run `poetry run worblehat --help` for more info
 ### Deadline daemon
 
 - [X] Ability to be notified when deadlines are due
-- [ ] Ability to be notified when books are available
-- [ ] Ability to have expiring queue positions automatically expire
+- [X] Ability to be notified when books are available
+- [X] Ability to have expiring queue positions automatically expire
 
 ### Web version of the program
 

@@ -33,5 +33,8 @@ from = 'worblehat@pvv.ntnu.no'
 subject_prefix = '[Worblehat]'
 
 [deadline_daemon]
-warn_days_before_borrow_deadline = [ "5", "1" ]
-warn_days_before_expiring_queue_position_deadline = [ "3", "1" ]
+enabled = true
+dryrun = false
+warn_days_before_borrowing_deadline = [ 5, 1 ]
+days_before_queue_position_expires = 14
+warn_days_before_expiring_queue_position_deadline = [ 3, 1 ]
