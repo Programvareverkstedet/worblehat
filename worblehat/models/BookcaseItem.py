@@ -2,10 +2,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
+  ForeignKey,
   Integer,
   SmallInteger,
   String,
-  ForeignKey,
+  Text,
 )
 from sqlalchemy.orm import (
     Mapped,
@@ -31,8 +32,11 @@ if TYPE_CHECKING:
     from .Language import Language
     from .MediaType import MediaType
 
-class BookcaseItem(Base, UidMixin, UniqueNameMixin):
+from worblehat.flaskapp.database import db
+
+class BookcaseItem(Base, UidMixin):
     isbn: Mapped[int] = mapped_column(String, unique=True, index=True)
+    name: Mapped[str] = mapped_column(Text, index=True)
     owner: Mapped[str] = mapped_column(String, default='PVV')
     amount: Mapped[int] = mapped_column(SmallInteger, default=1)
 
@@ -64,3 +68,12 @@ class BookcaseItem(Base, UidMixin, UniqueNameMixin):
         self.name = name
         self.isbn = isbn
         self.owner = owner
+
+    @classmethod
+    def get_by_isbn(cls, isbn: str, sql_session: Session = db.session) -> Self | None:
+        """
+        NOTE:
+        This method defaults to using the flask_sqlalchemy session.
+        It will not work outside of a request context, unless another session is provided.
+        """
+        return sql_session.query(cls).where(cls.isbn == isbn).one_or_none()

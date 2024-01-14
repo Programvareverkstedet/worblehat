@@ -31,6 +31,14 @@ subparsers.add_parser(
     help = 'Start the web interface in production mode',
 )
 
+subparsers.add_parser(
+    'devscripts',
+    help = 'Run development scripts',
+).add_argument(
+    'script',
+    help = 'The development script to run',
+)
+
 arg_parser.add_argument(
     '-V',
     '--version',

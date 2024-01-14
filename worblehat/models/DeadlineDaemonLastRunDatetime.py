@@ -21,3 +21,7 @@ class DeadlineDaemonLastRunDatetime(Base):
     )
     uid: Mapped[bool] = mapped_column(Boolean, primary_key=True, default=True)
     time: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
+
+    def __init__(self, time: datetime | None = None):
+        if time is not None:
+            self.time = time

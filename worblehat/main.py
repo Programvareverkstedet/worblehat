@@ -60,6 +60,19 @@ def main():
         WorblehatCli.run_with_safe_exit_wrapper(sql_session)
         exit(0)
 
+    if args.command == 'devscripts':
+        sql_session = _connect_to_database(echo=Config['logging.debug_sql'])
+        if args.script == 'seed-content-for-deadline-daemon':
+            from .devscripts.seed_content_for_deadline_daemon import main
+            main(sql_session)
+        elif args.script == 'seed-test-data':
+            from .devscripts.seed_test_data import main
+            main(sql_session)
+        else:
+            print(f'Error: no such script: {args.script}')
+            exit(1)
+        exit(0)
+
     if args.command == 'flask-dev':
         flask_dev_main()
         exit(0)
