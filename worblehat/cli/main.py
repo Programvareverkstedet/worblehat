@@ -1,8 +1,8 @@
 from textwrap import dedent
 
 from sqlalchemy import (
-   event,
-   select,
+    event,
+    select,
 )
 from sqlalchemy.orm import Session
 
@@ -191,10 +191,10 @@ class WorblehatCli(NumberedCmd):
 
     def do_exit(self, _: str):
         if self.sql_session_dirty:
-           if prompt_yes_no('Would you like to save your changes?'):
-               self.sql_session.commit()
-           else:
-               self.sql_session.rollback()
+            if prompt_yes_no('Would you like to save your changes?'):
+                self.sql_session.commit()
+            else:
+                self.sql_session.rollback()
         exit(0)
 
 

@@ -24,6 +24,9 @@ class Config:
     ]
 
     def __class_getitem__(cls, name: str) -> Any:
+        if cls._config is None:
+            raise RuntimeError('Configuration not loaded, call Config.load_configuration() first.')
+
         __config = cls._config
         for attr in name.split('.'):
             __config = __config.get(attr)
