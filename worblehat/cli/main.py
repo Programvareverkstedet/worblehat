@@ -171,6 +171,27 @@ class WorblehatCli(NumberedCmd):
             ).cmdloop()
 
 
+    def do_show_slabbedasker(self, _: str):
+        slubberter = self.sql_session.scalars(
+            select(BookcaseItemBorrowing)
+            .join(BookcaseItem)
+            .where(
+                BookcaseItemBorrowing.end_time < datetime.now(),
+                BookcaseItemBorrowing.delivered.is_(None),
+            )
+            .order_by(
+                BookcaseItemBorrowing.end_time,
+            ),
+        ).all()
+
+        if len(slubberter) == 0:
+            print('No slubberts found. Yay!')
+            return
+
+        for slubbert in slubberter:
+            print(f'{slubbert.username} - {slubbert.item.name} - {slubbert.end_time.strftime("%Y-%m-%d")}')
+
+
     def do_advanced(self, _: str):
         AdvancedOptionsCli(self.sql_session).cmdloop()
 
@@ -216,14 +237,18 @@ class WorblehatCli(NumberedCmd):
             'doc': 'Show a bookcase, and its items',
         },
         4: {
+            'f': do_show_slabbedasker,
+            'doc': 'Show a slabbedasker, and their wicked ways',
+        },
+        5: {
             'f': do_save,
             'doc': 'Save changes',
         },
-        5: {
+        6: {
             'f': do_abort,
             'doc': 'Abort changes',
         },
-        6: {
+        7: {
             'f': do_advanced,
             'doc': 'Advanced options',
         },

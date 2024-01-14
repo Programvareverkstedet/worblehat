@@ -62,7 +62,7 @@ Run `poetry run worblehat --help` for more info
 - [ ] Ability to borrow and deliver multiple items at a time
 - [X] Ability to enter the queue for borrowing an item
 - [ ] Ability to extend a borrowing, only if no one is behind you in the queue
-- [ ] Ability to list borrowed items which are overdue
+- [X] Ability to list borrowed items which are overdue
 - [~] Ability to search for items
 - [ ] Ability to print PVV-specific labels for items missing a label, or which for any other reason needs a custom one
 - [X] Ascii art of monkey with fingers in eyes
