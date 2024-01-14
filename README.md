@@ -54,7 +54,10 @@ Run `poetry run worblehat --help` for more info
 
 ### Cli version of the program (this is currently being worked on)
 
-- [X] Ability to pull data from online sources with ISBN
+- [~] Ability to pull data from online sources with ISBN
+  - This possibly needs some more work, to pull data from different sources.
+    We have a quite large library of manga that we would have to manually add
+    to openlibrary if we were to use this as our only source.
 - [X] Ability to create and update bookcases
 - [X] Ability to create and update bookcase shelfs
 - [X] Ability to create and update bookcase items
