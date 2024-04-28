@@ -1,23 +1,42 @@
 {
-  # inputs.nixpkgs.url = "nixpkgs/nixos-22.11";
-  inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
+  inputs.nixpkgs.url = "nixpkgs/nixos-23.11";
 
   outputs = { self, nixpkgs }: let
-    system = "x86_64-linux";
-    pkgs = nixpkgs.legacyPackages.${system};
-    inherit (pkgs) lib;
+    systems = [
+      "x86_64-linux"
+      "aarch64-linux"
+      "x86_64-darwin"
+      "aarch64-darwin"
+    ];
+    forAllSystems = f: nixpkgs.lib.genAttrs systems (system: let
+      pkgs = nixpkgs.legacyPackages.${system};
+    in f system pkgs);
   in {
-    apps.${system} = let
-      app = program: {
+    apps = forAllSystems (system: pkgs: let
+      mkApp = program: {
         type = "app";
         inherit program;
       };
     in {
-      default = self.apps.${system}.worblehat;
-      worblehat = app "${self.packages.${system}.worblehat}/bin/worblehat";
-    };
+      default = mkApp self.packages.${system}.default;
+    });
 
-    packages.${system} = {
+    devShells = forAllSystems (_: pkgs: {
+      default = pkgs.mkShell {
+        packages = with pkgs; [
+          poetry
+          sqlite
+        ];
+        shellHook = ''
+          poetry install
+          poetry shell && exit
+        '';
+      };
+    });
+
+    overlays.default = final: prev: self.packages.${final.system};
+
+    packages = forAllSystems (system: pkgs: {
       default = self.packages.${system}.worblehat;
       worblehat = with pkgs.python3Packages; buildPythonPackage {
         pname = "worblehat";
@@ -38,10 +57,6 @@
           sqlalchemy
         ];
       };
-    };
-
-    devShells.${system}.default = pkgs.mkShell {
-      packages = with pkgs; [ poetry sqlite ];
-    };
+    });
   };
 }
