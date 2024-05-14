@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from textwrap import dedent
 from sqlalchemy import select
 
@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from worblehat.cli.prompt_utils import (
     InteractiveItemSelector,
     NumberedCmd,
+    NumberedItemSelector,
     format_date,
     prompt_yes_no,
 )
@@ -22,6 +23,7 @@ from worblehat.services.bookcase_item import (
     create_bookcase_item_from_isbn,
     is_valid_isbn,
 )
+from worblehat.services.config import Config
 
 from .bookcase_shelf_selector import select_bookcase_shelf
 
@@ -174,6 +176,50 @@ class BookcaseItemCli(NumberedCmd):
         print(f'Successfully delivered the item for {borrowing.username}')
 
 
+    def do_extend_borrowing(self, _: str):
+        borrowings = self.sql_session.scalars(
+            select(BookcaseItemBorrowing)
+            .join(BookcaseItem, BookcaseItem.uid == BookcaseItemBorrowing.fk_bookcase_item_uid)
+            .where(BookcaseItem.isbn == self.bookcase_item.isbn)
+            .order_by(BookcaseItemBorrowing.username)
+        ).all()
+
+        if len(borrowings) == 0:
+            print('No one seems to have borrowed this item')
+            return
+
+        borrowing_queue = self.sql_session.scalars(
+            select(BookcaseItemBorrowingQueue)
+            .where(
+                BookcaseItemBorrowingQueue.item == self.bookcase_item,
+                BookcaseItemBorrowingQueue.item_became_available_time == None,
+            )
+            .order_by(BookcaseItemBorrowingQueue.entered_queue_time)
+        ).all()
+
+        if len(borrowing_queue) != 0:
+          print('Sorry, you cannot extend the borrowing because there are people waiting in the queue')
+          print('Borrowing queue:')
+          for i, b in enumerate(borrowing_queue):
+              print(f'  {i + 1}) {b.username}')
+          return
+
+        print('Who are you?')
+        selector = NumberedItemSelector(
+            items = list(borrowings),
+            stringify = lambda b: f'{b.username} - Until {format_date(b.end_time)}',
+        )
+        selector.cmdloop()
+        if selector.result is None:
+            return
+        borrowing = selector.result
+
+        borrowing.end_time = datetime.now() + timedelta(days=int(Config['deadline_daemon.days_before_queue_position_expires']))
+        self.sql_session.flush()
+
+        print(f'Successfully extended the borrowing for {borrowing.username} until {format_date(borrowing.end_time)}')
+
+
     def do_done(self, _: str):
         return True
 
@@ -188,10 +234,14 @@ class BookcaseItemCli(NumberedCmd):
             'doc': 'Deliver',
         },
         3: {
+            'f': do_extend_borrowing,
+            'doc': 'Extend borrowing',
+        },
+        4: {
             'f': do_edit,
             'doc': 'Edit',
         },
-        4: {
+        5: {
             'f': do_update_data,
             'doc': 'Pull updated data from online databases',
         },
