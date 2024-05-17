@@ -58,6 +58,7 @@ class InteractiveItemSelector(Cmd):
         self.execute_selection = execute_selection
         self.complete_selection = complete_selection
         self.default_item = default
+        self.result = None
 
         if default is not None:
           self.prompt = f'Select {cls.__name__} [{default.name}]> '
@@ -197,6 +198,7 @@ class NumberedItemSelector(NumberedCmd):
         super().__init__()
         self.items = items
         self.stringify = stringify
+        self.result = None
         self.funcs = {
             i: {
                 'f': self._select_item,
