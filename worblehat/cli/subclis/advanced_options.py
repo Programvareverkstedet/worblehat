@@ -91,6 +91,26 @@ class AdvancedOptionsCli(NumberedCmd):
         self.sql_session.flush()
 
 
+    def do_list_bookcases(self, _: str):
+        bookcase_shelfs = self.sql_session.scalars(
+            select(BookcaseShelf)
+            .join(Bookcase)
+            .order_by(
+              Bookcase.name,
+              BookcaseShelf.column,
+              BookcaseShelf.row,
+            )
+        ).all()
+
+        bookcase_uid = None
+        for shelf in bookcase_shelfs:
+            if shelf.bookcase.uid != bookcase_uid:
+                print(shelf.bookcase.short_str())
+                bookcase_uid = shelf.bookcase.uid
+
+            print(f'  {shelf.short_str()} - {sum(i.amount for i in shelf.items)} items')
+
+
     def do_done(self, _: str):
         return True
 
@@ -103,6 +123,10 @@ class AdvancedOptionsCli(NumberedCmd):
         2: {
             'f': do_add_bookcase_shelf,
             'doc': 'Add bookcase shelf',
+        },
+        3: {
+            'f': do_list_bookcases,
+            'doc': 'List all bookcases',
         },
         9: {
             'f': do_done,
