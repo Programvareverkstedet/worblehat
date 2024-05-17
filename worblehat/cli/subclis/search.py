@@ -13,6 +13,7 @@ class SearchCli(NumberedCmd):
     def __init__(self, sql_session: Session):
         super().__init__()
         self.sql_session = sql_session
+        self.result = None
 
 
     def do_search_all(self, _: str):
@@ -57,11 +58,11 @@ class SearchCli(NumberedCmd):
         elif len(author) == 1:
             selected_author = author[0]
             print('Found author:')
-            print(f"  {selected_author.name} ({sum(item.amount for item in selected_author.books)} items)")
+            print(f"  {selected_author.name} ({sum(item.amount for item in selected_author.items)} items)")
         else:
             selector = NumberedItemSelector(
                 items = author,
-                stringify = lambda author: f"{author.name} ({sum(item.amount for item in author.books)} items)",
+                stringify = lambda author: f"{author.name} ({sum(item.amount for item in author.items)} items)",
             )
             selector.cmdloop()
             if selector.result is None:
@@ -69,7 +70,7 @@ class SearchCli(NumberedCmd):
             selected_author = selector.result
 
         selector = NumberedItemSelector(
-            items = selected_author.books,
+            items = list(selected_author.items),
             stringify = lambda item: f"{item.name} ({item.isbn})",
         )
         selector.cmdloop()
