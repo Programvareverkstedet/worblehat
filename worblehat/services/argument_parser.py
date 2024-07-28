@@ -31,12 +31,17 @@ subparsers.add_parser(
     help = 'Start the web interface in production mode',
 )
 
-subparsers.add_parser(
-    'devscripts',
-    help = 'Run development scripts',
-).add_argument(
-    'script',
-    help = 'The development script to run',
+devscripts_arg_parser = subparsers.add_parser('devscripts', help='Run development scripts')
+devscripts_subparsers = devscripts_arg_parser.add_subparsers(dest='script')
+
+devscripts_subparsers.add_parser(
+    'seed-test-data',
+    help = 'Seed test data in the database',
+)
+
+devscripts_subparsers.add_parser(
+    'seed-content-for-deadline-daemon',
+    help = 'Seed data tailorded for testing the deadline daemon, into the database',
 )
 
 arg_parser.add_argument(

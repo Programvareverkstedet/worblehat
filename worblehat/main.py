@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from .services import (
     Config,
     arg_parser,
+    devscripts_arg_parser,
 )
 
 from .deadline_daemon import DeadlineDaemon
@@ -69,7 +70,7 @@ def main():
             from .devscripts.seed_test_data import main
             main(sql_session)
         else:
-            print(f'Error: no such script: {args.script}')
+            print(devscripts_arg_parser.format_help())
             exit(1)
         exit(0)
 
@@ -84,3 +85,4 @@ def main():
         exit(0)
 
     print(arg_parser.format_help())
+    exit(1)

@@ -1,4 +1,7 @@
-from .argument_parser import arg_parser
+from .argument_parser import (
+  arg_parser,
+  devscripts_arg_parser,
+)
 from .bookcase_item import (
     create_bookcase_item_from_isbn,
     is_valid_isbn,
