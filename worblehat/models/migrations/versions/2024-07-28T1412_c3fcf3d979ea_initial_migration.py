@@ -1,8 +1,8 @@
 """initial_migration
 
-Revision ID: d51c7172d2f2
+Revision ID: c3fcf3d979ea
 Revises: 
-Create Date: 2023-05-06 17:46:39.230122
+Create Date: 2024-07-28 14:12:02.772571
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'd51c7172d2f2'
+revision = 'c3fcf3d979ea'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -44,6 +44,12 @@ def upgrade() -> None:
     with op.batch_alter_table('Category', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_Category_name'), ['name'], unique=True)
 
+    op.create_table('DeadlineDaemonLastRunDatetime',
+    sa.Column('uid', sa.Boolean(), nullable=False),
+    sa.Column('time', sa.DateTime(), nullable=False),
+    sa.CheckConstraint('uid = true', name=op.f('ck_DeadlineDaemonLastRunDatetime_`single_row_only`')),
+    sa.PrimaryKeyConstraint('uid', name=op.f('pk_DeadlineDaemonLastRunDatetime'))
+    )
     op.create_table('Language',
     sa.Column('iso639_1_code', sa.String(length=2), nullable=False),
     sa.Column('uid', sa.Integer(), nullable=False),
@@ -75,13 +81,13 @@ def upgrade() -> None:
     )
     op.create_table('BookcaseItem',
     sa.Column('isbn', sa.String(), nullable=False),
+    sa.Column('name', sa.Text(), nullable=False),
     sa.Column('owner', sa.String(), nullable=False),
     sa.Column('amount', sa.SmallInteger(), nullable=False),
     sa.Column('fk_media_type_uid', sa.Integer(), nullable=False),
     sa.Column('fk_bookcase_shelf_uid', sa.Integer(), nullable=True),
     sa.Column('fk_language_uid', sa.Integer(), nullable=True),
     sa.Column('uid', sa.Integer(), nullable=False),
-    sa.Column('name', sa.Text(), nullable=False),
     sa.ForeignKeyConstraint(['fk_bookcase_shelf_uid'], ['BookcaseShelf.uid'], name=op.f('fk_BookcaseItem_fk_bookcase_shelf_uid_BookcaseShelf')),
     sa.ForeignKeyConstraint(['fk_language_uid'], ['Language.uid'], name=op.f('fk_BookcaseItem_fk_language_uid_Language')),
     sa.ForeignKeyConstraint(['fk_media_type_uid'], ['MediaType.uid'], name=op.f('fk_BookcaseItem_fk_media_type_uid_MediaType')),
@@ -89,13 +95,13 @@ def upgrade() -> None:
     )
     with op.batch_alter_table('BookcaseItem', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_BookcaseItem_isbn'), ['isbn'], unique=True)
-        batch_op.create_index(batch_op.f('ix_BookcaseItem_name'), ['name'], unique=True)
+        batch_op.create_index(batch_op.f('ix_BookcaseItem_name'), ['name'], unique=False)
 
     op.create_table('BookcaseItemBorrowing',
     sa.Column('username', sa.String(), nullable=False),
     sa.Column('start_time', sa.DateTime(), nullable=False),
     sa.Column('end_time', sa.DateTime(), nullable=False),
-    sa.Column('delivered', sa.Boolean(), nullable=False),
+    sa.Column('delivered', sa.DateTime(), nullable=True),
     sa.Column('fk_bookcase_item_uid', sa.Integer(), nullable=False),
     sa.Column('uid', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['fk_bookcase_item_uid'], ['BookcaseItem.uid'], name=op.f('fk_BookcaseItemBorrowing_fk_bookcase_item_uid_BookcaseItem')),
@@ -106,8 +112,9 @@ def upgrade() -> None:
 
     op.create_table('BookcaseItemBorrowingQueue',
     sa.Column('username', sa.String(), nullable=False),
-    sa.Column('entered_queue_time', sa.DateTime(), nullable=True),
-    sa.Column('should_notify_user', sa.Boolean(), nullable=True),
+    sa.Column('entered_queue_time', sa.DateTime(), nullable=False),
+    sa.Column('item_became_available_time', sa.DateTime(), nullable=True),
+    sa.Column('expired', sa.Boolean(), nullable=True),
     sa.Column('fk_bookcase_item_uid', sa.Integer(), nullable=False),
     sa.Column('uid', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['fk_bookcase_item_uid'], ['BookcaseItem.uid'], name=op.f('fk_BookcaseItemBorrowingQueue_fk_bookcase_item_uid_BookcaseItem')),
@@ -160,6 +167,7 @@ def downgrade() -> None:
         batch_op.drop_index(batch_op.f('ix_Language_iso639_1_code'))
 
     op.drop_table('Language')
+    op.drop_table('DeadlineDaemonLastRunDatetime')
     with op.batch_alter_table('Category', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_Category_name'))
 
