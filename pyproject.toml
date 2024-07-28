@@ -16,6 +16,8 @@ isbnlib = "^3.10.14"
 python = "^3.11"
 sqlalchemy = "^2.0.8"
 psycopg2-binary = "^2.9.6"
+requests = "^2.32.3"
+bs4 = "^0.0.2"
 
 [tool.poetry.group.dev.dependencies]
 werkzeug = "^2.3.3"
