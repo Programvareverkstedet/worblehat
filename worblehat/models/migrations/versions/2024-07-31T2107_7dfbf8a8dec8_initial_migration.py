@@ -1,8 +1,8 @@
 """initial_migration
 
-Revision ID: c3fcf3d979ea
+Revision ID: 7dfbf8a8dec8
 Revises: 
-Create Date: 2024-07-28 14:12:02.772571
+Create Date: 2024-07-31 21:07:13.434012
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'c3fcf3d979ea'
+revision = '7dfbf8a8dec8'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -85,7 +85,7 @@ def upgrade() -> None:
     sa.Column('owner', sa.String(), nullable=False),
     sa.Column('amount', sa.SmallInteger(), nullable=False),
     sa.Column('fk_media_type_uid', sa.Integer(), nullable=False),
-    sa.Column('fk_bookcase_shelf_uid', sa.Integer(), nullable=True),
+    sa.Column('fk_bookcase_shelf_uid', sa.Integer(), nullable=False),
     sa.Column('fk_language_uid', sa.Integer(), nullable=True),
     sa.Column('uid', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['fk_bookcase_shelf_uid'], ['BookcaseShelf.uid'], name=op.f('fk_BookcaseItem_fk_bookcase_shelf_uid_BookcaseShelf')),

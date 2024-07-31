@@ -41,7 +41,7 @@ class BookcaseItem(Base, UidMixin):
     amount: Mapped[int] = mapped_column(SmallInteger, default=1)
 
     fk_media_type_uid: Mapped[int] = mapped_column(ForeignKey('MediaType.uid'))
-    fk_bookcase_shelf_uid: Mapped[int | None] = mapped_column(ForeignKey('BookcaseShelf.uid'))
+    fk_bookcase_shelf_uid: Mapped[int] = mapped_column(ForeignKey('BookcaseShelf.uid'))
     fk_language_uid: Mapped[int | None] = mapped_column(ForeignKey('Language.uid'))
 
     media_type: Mapped[MediaType] = relationship(back_populates='items')

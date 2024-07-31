@@ -78,10 +78,10 @@ def main(sql_session):
     second_half = bookcase_items[half:]
 
     for item in first_half:
-        item.bookcase_shelf = seed_shelf_1
+        seed_shelf_1.items.add(item)
 
     for item in second_half:
-        item.bookcase_shelf = seed_shelf_2
+        seed_shelf_2.items.add(item)
 
     sql_session.add_all(bookcase_items)
     sql_session.commit()
