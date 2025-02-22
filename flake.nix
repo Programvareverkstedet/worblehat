@@ -1,5 +1,5 @@
 {
-  inputs.nixpkgs.url = "nixpkgs/nixos-23.11";
+  inputs.nixpkgs.url = "nixpkgs/nixos-24.11";
 
   outputs = { self, nixpkgs }: let
     systems = [
@@ -8,14 +8,37 @@
       "x86_64-darwin"
       "aarch64-darwin"
     ];
+
     forAllSystems = f: nixpkgs.lib.genAttrs systems (system: let
       pkgs = nixpkgs.legacyPackages.${system};
     in f system pkgs);
+
+    inherit (nixpkgs) lib;
+
+    deps = ppkgs: with ppkgs; [
+      alembic
+      beautifulsoup4
+      click
+      flask
+      (flask-admin.override {
+        wtf-peewee = wtf-peewee.overrideAttrs (_: {
+          doCheck = false;
+          doInstallCheck = false;
+        });
+      })
+      flask-sqlalchemy
+      isbnlib
+      psycopg2-binary
+      python-dotenv
+      requests
+      sqlalchemy
+    ];
+
   in {
     apps = forAllSystems (system: pkgs: let
-      mkApp = program: {
+      mkApp = package: {
         type = "app";
-        inherit program;
+        program = lib.getExe package;
       };
     in {
       default = mkApp self.packages.${system}.default;
@@ -24,13 +47,10 @@
     devShells = forAllSystems (_: pkgs: {
       default = pkgs.mkShell {
         packages = with pkgs; [
-          poetry
-          sqlite
+          uv
+          sqlite-interactive
+          (python3.withPackages deps)
         ];
-        shellHook = ''
-          poetry install
-          poetry shell && exit
-        '';
       };
     });
 
@@ -45,17 +65,10 @@
 
         format = "pyproject";
 
-        buildInputs = [ poetry-core ];
-        propagatedBuildInputs = [
-          alembic
-          click
-          flask
-          flask-admin
-          flask-sqlalchemy
-          isbnlib
-          python-dotenv
-          sqlalchemy
-        ];
+        build-system = [ hatchling ];
+        dependencies = deps pkgs.python3Packages;
+
+        meta.mainProgram = "worblehat";
       };
     });
   };

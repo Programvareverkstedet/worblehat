@@ -24,12 +24,11 @@ Worblehatt har vært påbegynnt flere ganger opp gjennom historien uten å komme
 
 ## Setup
 
-This project uses [poetry][poetry] as its buildtool as of May 2023.
+This project uses `uv` as its buildtool as of February 2025.
 
 ```console
-$ poetry install
-$ poetry run alembic migrate
-$ poetry run worblehat --help
+$ uv run alembic migrate
+$ uv run worblehat --help
 ```
 
 ## How to configure
@@ -42,4 +41,4 @@ Unless provided through the `--config` flag, program will automatically look for
 - `~/.config/worblehat/config.toml`
 - `/var/lib/worblehat/config.toml`
 
-Run `poetry run worblehat --help` for more info
+Run `uv run worblehat --help` for more info
