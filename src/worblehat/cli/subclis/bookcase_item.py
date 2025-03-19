@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from sqlalchemy.orm import Session
 
-from worblehat.cli.prompt_utils import (
+from libdib.repl import (
     InteractiveItemSelector,
     NumberedCmd,
     NumberedItemSelector,
@@ -393,4 +393,3 @@ class EditBookcaseCli(NumberedCmd):
             'doc': 'Done',
         },
     }
-

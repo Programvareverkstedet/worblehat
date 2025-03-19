@@ -14,6 +14,7 @@ dependencies = [
   "flask-sqlalchemy>=3.1.1",
   "flask>=3.0.3",
   "isbnlib>=3.10.14",
+  "libdib",
   "psycopg2-binary>=2.9.9",
   "requests>=2.32.3",
   "sqlalchemy>=2.0.34",
@@ -46,3 +47,6 @@ downmigrate = "alembic downgrade -1"
 # Be careful with cleanmigrations. If you run migrate a database and then
 # delete the migration file with this, there will be no easy way of downgrading
 cleanmigrations = "git clean -f worblehat/models/migrations/versions"
+
+[tool.uv.sources]
+libdib = { git = "https://git.pvv.ntnu.no/Projects/libdib.git" }

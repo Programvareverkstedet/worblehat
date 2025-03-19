@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 
-from worblehat.cli.prompt_utils import (
+from libdib.repl import (
     NumberedCmd,
     NumberedItemSelector,
 )

@@ -1,7 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from worblehat.cli.prompt_utils import InteractiveItemSelector
+from libdib.repl import InteractiveItemSelector
+
 from worblehat.models import (
     Bookcase,
     BookcaseShelf,

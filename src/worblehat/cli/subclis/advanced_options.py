@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from worblehat.cli.prompt_utils import (
+from libdib.repl import (
     InteractiveItemSelector,
     NumberedCmd,
     format_date,

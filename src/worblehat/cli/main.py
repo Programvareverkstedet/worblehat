@@ -6,6 +6,12 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Session
 
+from libdib.repl import (
+    NumberedCmd,
+    InteractiveItemSelector,
+    prompt_yes_no,
+)
+
 from worblehat.services import (
     create_bookcase_item_from_isbn,
     is_valid_isbn,
@@ -13,7 +19,6 @@ from worblehat.services import (
 
 from worblehat.models import *
 
-from .prompt_utils import *
 from .subclis import (
     AdvancedOptionsCli,
     BookcaseItemCli,
