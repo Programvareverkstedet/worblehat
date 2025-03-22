@@ -48,6 +48,7 @@
       default = pkgs.mkShell {
         packages = with pkgs; [
           uv
+          ruff
           sqlite-interactive
           (python3.withPackages deps)
         ];
