@@ -10,22 +10,27 @@ from ..models import (
     Language,
 )
 
+
 def is_valid_pvv_isbn(isbn: str) -> bool:
-  try:
-      int(isbn)
-  except ValueError:
-      return False
-  return len(isbn) == 8
+    try:
+        int(isbn)
+    except ValueError:
+        return False
+    return len(isbn) == 8
 
 
 def is_valid_isbn(isbn: str) -> bool:
-    return any([
-        isbnlib.is_isbn10(isbn),
-        isbnlib.is_isbn13(isbn),
-    ])
+    return any(
+        [
+            isbnlib.is_isbn10(isbn),
+            isbnlib.is_isbn13(isbn),
+        ]
+    )
 
 
-def create_bookcase_item_from_isbn(isbn: str, sql_session: Session) -> BookcaseItem | None:
+def create_bookcase_item_from_isbn(
+    isbn: str, sql_session: Session
+) -> BookcaseItem | None:
     """
     This function fetches metadata for the given ISBN and creates a BookcaseItem from it.
     It does so using a database connection to connect it to the correct authors and language
@@ -43,18 +48,17 @@ def create_bookcase_item_from_isbn(isbn: str, sql_session: Session) -> BookcaseI
     metadata = metadata[0]
 
     bookcase_item = BookcaseItem(
-        name = metadata.title,
-        isbn = int(isbn.replace('-', '')),
+        name=metadata.title,
+        isbn=int(isbn.replace("-", "")),
     )
 
     if len(authors := metadata.authors) > 0:
         for author in authors:
             bookcase_item.authors.add(Author(author))
 
-    if (language := metadata.language):
+    if language := metadata.language:
         bookcase_item.language = sql_session.scalars(
-            select(Language)
-            .where(Language.iso639_1_code == language)
+            select(Language).where(Language.iso639_1_code == language)
         ).one()
 
     return bookcase_item

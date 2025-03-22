@@ -12,11 +12,12 @@ from sqlalchemy.orm import (
 
 from .Base import Base
 
+
 class DeadlineDaemonLastRunDatetime(Base):
     __table_args__ = (
         CheckConstraint(
-            'uid = true',
-            name = 'single_row_only',
+            "uid = true",
+            name="single_row_only",
         ),
     )
     uid: Mapped[bool] = mapped_column(Boolean, primary_key=True, default=True)

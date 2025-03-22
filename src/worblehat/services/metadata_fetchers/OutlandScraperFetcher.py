@@ -30,7 +30,7 @@ LANGUAGE_MAP = {
 class OutlandScraperFetcher(BookMetadataFetcher):
     @classmethod
     def metadata_source_id(_cls) -> str:
-      return "outland_scraper"
+        return "outland_scraper"
 
     @classmethod
     def fetch_metadata(cls, isbn: str) -> BookMetadata | None:
@@ -50,7 +50,7 @@ class OutlandScraperFetcher(BookMetadataFetcher):
             title = soup.find_all("span", class_="base")[0].text
 
             releaseDate = soup.find_all("span", class_="release-date")[0].text.strip()
-            releaseDate = releaseDate[-4:] # only keep year
+            releaseDate = releaseDate[-4:]  # only keep year
 
             bookData = {
                 "Title": title,
@@ -67,7 +67,7 @@ class OutlandScraperFetcher(BookMetadataFetcher):
                 "NumberOfPages": "Antall Sider",
                 "Genre": "Sjanger",
                 "Language": "Språk",
-                "Subjects": "Serie"
+                "Subjects": "Serie",
             }
 
             for value in data:
@@ -92,18 +92,18 @@ class OutlandScraperFetcher(BookMetadataFetcher):
             return None
 
         return BookMetadata(
-            isbn = isbn,
-            title = bookData.get('Title'),
-            source = cls.metadata_source_id(),
-            authors = bookData.get('Authors'),
-            language = bookData.get('Language'),
-            publish_date = bookData.get('PublishDate'),
-            num_pages = bookData.get('NumberOfPages'),
-            subjects = bookData.get('Subjects'),
+            isbn=isbn,
+            title=bookData.get("Title"),
+            source=cls.metadata_source_id(),
+            authors=bookData.get("Authors"),
+            language=bookData.get("Language"),
+            publish_date=bookData.get("PublishDate"),
+            num_pages=bookData.get("NumberOfPages"),
+            subjects=bookData.get("Subjects"),
         )
 
 
-if __name__ == '__main__':
-    book_data = OutlandScraperFetcher.fetch_metadata('9781947808225')
+if __name__ == "__main__":
+    book_data = OutlandScraperFetcher.fetch_metadata("9781947808225")
     book_data.validate()
     print(book_data)

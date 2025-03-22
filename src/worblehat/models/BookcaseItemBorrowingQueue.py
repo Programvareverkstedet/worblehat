@@ -16,18 +16,24 @@ from sqlalchemy.orm import (
 
 from .Base import Base
 from .mixins import UidMixin
+
 if TYPE_CHECKING:
     from .BookcaseItem import BookcaseItem
 
+
 class BookcaseItemBorrowingQueue(Base, UidMixin):
     username: Mapped[str] = mapped_column(String)
-    entered_queue_time: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
+    entered_queue_time: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now()
+    )
     item_became_available_time: Mapped[datetime | None] = mapped_column(DateTime)
     expired = mapped_column(Boolean, default=False)
 
-    fk_bookcase_item_uid: Mapped[int] = mapped_column(ForeignKey('BookcaseItem.uid'), index=True)
+    fk_bookcase_item_uid: Mapped[int] = mapped_column(
+        ForeignKey("BookcaseItem.uid"), index=True
+    )
 
-    item: Mapped[BookcaseItem] = relationship(back_populates='borrowing_queue')
+    item: Mapped[BookcaseItem] = relationship(back_populates="borrowing_queue")
 
     def __init__(
         self,

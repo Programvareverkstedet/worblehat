@@ -1,19 +1,18 @@
 import csv
 
 from pathlib import Path
-from datetime import datetime, timedelta
 
 from worblehat.models import (
-  Bookcase,
-  BookcaseItem,
-  BookcaseShelf,
-  MediaType,
-  Language,
+    Bookcase,
+    BookcaseItem,
+    BookcaseShelf,
+    MediaType,
+    Language,
 )
-from worblehat.services.config import Config
 
 
-CSV_FILE = Path(__file__).parent.parent.parent / 'data' / 'arbeidsrom_smal_hylle_5.csv'
+CSV_FILE = Path(__file__).parent.parent.parent / "data" / "arbeidsrom_smal_hylle_5.csv"
+
 
 def clear_db(sql_session):
     sql_session.query(BookcaseItem).delete()
@@ -23,45 +22,46 @@ def clear_db(sql_session):
     sql_session.query(Language).delete()
     sql_session.commit()
 
+
 def main(sql_session):
     clear_db(sql_session)
 
     media_type = MediaType(
-        name='Book',
-        description='A book',
+        name="Book",
+        description="A book",
     )
     sql_session.add(media_type)
 
     language = Language(
-        name='Norwegian',
-        iso639_1_code='no',
+        name="Norwegian",
+        iso639_1_code="no",
     )
     sql_session.add(language)
 
     seed_case = Bookcase(
-        name='seed_case',
-        description='test bookcase with test data',
+        name="seed_case",
+        description="test bookcase with test data",
     )
     sql_session.add(seed_case)
 
     seed_shelf_1 = BookcaseShelf(
-      row=1,
-      column=1,
-      bookcase=seed_case,
-      description='test shelf with test data 1',
+        row=1,
+        column=1,
+        bookcase=seed_case,
+        description="test shelf with test data 1",
     )
     seed_shelf_2 = BookcaseShelf(
-      row=2,
-      column=1,
-      bookcase=seed_case,
-      description='test shelf with test data 2',
+        row=2,
+        column=1,
+        bookcase=seed_case,
+        description="test shelf with test data 2",
     )
     sql_session.add(seed_shelf_1)
     sql_session.add(seed_shelf_2)
 
     bookcase_items = []
     with open(CSV_FILE) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
+        csv_reader = csv.reader(csv_file, delimiter=",")
 
         next(csv_reader)
         for row in csv_reader:

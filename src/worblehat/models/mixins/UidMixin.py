@@ -9,6 +9,7 @@ from sqlalchemy.orm import (
 
 from worblehat.flaskapp.database import db
 
+
 class UidMixin(object):
     uid: Mapped[int] = mapped_column(Integer, primary_key=True)
 

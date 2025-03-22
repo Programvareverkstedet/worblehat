@@ -13,13 +13,15 @@ from .mixins import (
     UidMixin,
     UniqueNameMixin,
 )
+
 if TYPE_CHECKING:
     from .BookcaseShelf import BookcaseShelf
+
 
 class Bookcase(Base, UidMixin, UniqueNameMixin):
     description: Mapped[str | None] = mapped_column(Text)
 
-    shelfs: Mapped[list[BookcaseShelf]] = relationship(back_populates='bookcase')
+    shelfs: Mapped[list[BookcaseShelf]] = relationship(back_populates="bookcase")
 
     def __init__(
         self,
@@ -32,6 +34,5 @@ class Bookcase(Base, UidMixin, UniqueNameMixin):
     def short_str(self) -> str:
         result = self.name
         if self.description is not None:
-            result += f' [{self.description}]'
+            result += f" [{self.description}]"
         return result
-

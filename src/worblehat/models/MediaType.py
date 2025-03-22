@@ -10,13 +10,15 @@ from sqlalchemy.orm import (
 
 from .Base import Base
 from .mixins import UidMixin, UniqueNameMixin
+
 if TYPE_CHECKING:
     from .BookcaseItem import BookcaseItem
+
 
 class MediaType(Base, UidMixin, UniqueNameMixin):
     description: Mapped[str | None] = mapped_column(Text)
 
-    items: Mapped[set[BookcaseItem]] = relationship(back_populates='media_type')
+    items: Mapped[set[BookcaseItem]] = relationship(back_populates="media_type")
 
     def __init__(
         self,
@@ -25,5 +27,3 @@ class MediaType(Base, UidMixin, UniqueNameMixin):
     ):
         self.name = name
         self.description = description
-
-

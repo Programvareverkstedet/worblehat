@@ -9,6 +9,7 @@ from sqlalchemy.orm import (
 
 from worblehat.flaskapp.database import db
 
+
 class UniqueNameMixin(object):
     name: Mapped[str] = mapped_column(Text, unique=True, index=True)
 

@@ -1,5 +1,4 @@
 from alembic import context
-from flask import current_app
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -14,7 +13,8 @@ if config.config_file_name is not None:
 
 Config.load_configuration({})
 
-config.set_main_option('sqlalchemy.url', Config.db_string())
+config.set_main_option("sqlalchemy.url", Config.db_string())
+
 
 # This will make sure alembic doesn't generate empty migrations
 # https://stackoverflow.com/questions/70203927/how-to-prevent-alembic-revision-autogenerate-from-making-revision-file-if-it-h
@@ -23,7 +23,8 @@ def _process_revision_directives(context, revision, directives):
         script = directives[0]
         if script.upgrade_ops.is_empty():
             directives[:] = []
-            print('No changes in schema detected. Not generating migration.')
+            print("No changes in schema detected. Not generating migration.")
+
 
 def run_migrations_online() -> None:
     connectable = engine_from_config(
@@ -36,11 +37,9 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection,
             target_metadata=Base.metadata,
-
             # Extended type checking with alembic when generating migrations
             # https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect
             compare_type=True,
-
             # This is required for ALTER TABLE to work with sqlite.
             # It should have no effect on postgreSQL
             # https://alembic.sqlalchemy.org/en/latest/batch.html
@@ -50,6 +49,7 @@ def run_migrations_online() -> None:
 
         with context.begin_transaction():
             context.run_migrations()
+
 
 # We don't have any good reasons to generate raw sql migrations,
 # so the `run_migrations_offline` has been removed

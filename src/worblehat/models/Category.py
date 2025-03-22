@@ -14,15 +14,17 @@ from .mixins import (
     UniqueNameMixin,
 )
 from .xref_tables import Item_Category
+
 if TYPE_CHECKING:
     from .BookcaseItem import BookcaseItem
+
 
 class Category(Base, UidMixin, UniqueNameMixin):
     description: Mapped[str | None] = mapped_column(Text)
 
     items: Mapped[set[BookcaseItem]] = relationship(
         secondary=Item_Category.__table__,
-        back_populates='categories',
+        back_populates="categories",
     )
 
     def __init__(

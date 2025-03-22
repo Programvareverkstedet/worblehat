@@ -11,14 +11,14 @@ from worblehat.services.metadata_fetchers.BookMetadata import BookMetadata
 class GoogleBooksFetcher(BookMetadataFetcher):
     @classmethod
     def metadata_source_id(_cls) -> str:
-      return "google_books"
+        return "google_books"
 
     @classmethod
     def fetch_metadata(cls, isbn: str) -> BookMetadata | None:
         try:
             jsonInput = requests.get(
-                f"https://www.googleapis.com/books/v1/volumes",
-                params = {"q": f"isbn:{isbn}"},
+                "https://www.googleapis.com/books/v1/volumes",
+                params={"q": f"isbn:{isbn}"},
             ).json()
             data = jsonInput.get("items")[0].get("volumeInfo")
 
@@ -34,18 +34,18 @@ class GoogleBooksFetcher(BookMetadataFetcher):
             return None
 
         return BookMetadata(
-            isbn = isbn,
-            title = title,
-            source = cls.metadata_source_id(),
-            authors = authors,
-            language = languages,
-            publish_date = publishDate,
-            num_pages = numberOfPages,
-            subjects = subjects,
+            isbn=isbn,
+            title=title,
+            source=cls.metadata_source_id(),
+            authors=authors,
+            language=languages,
+            publish_date=publishDate,
+            num_pages=numberOfPages,
+            subjects=subjects,
         )
 
 
-if __name__ == '__main__':
-    book_data = GoogleBooksFetcher.fetch_metadata('0132624788')
+if __name__ == "__main__":
+    book_data = GoogleBooksFetcher.fetch_metadata("0132624788")
     book_data.validate()
     print(book_data)

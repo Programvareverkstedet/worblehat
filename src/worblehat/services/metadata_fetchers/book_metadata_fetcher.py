@@ -10,7 +10,9 @@ from worblehat.services.metadata_fetchers.BookMetadataFetcher import BookMetadat
 
 from worblehat.services.metadata_fetchers.GoogleBooksFetcher import GoogleBooksFetcher
 from worblehat.services.metadata_fetchers.OpenLibraryFetcher import OpenLibraryFetcher
-from worblehat.services.metadata_fetchers.OutlandScraperFetcher import OutlandScraperFetcher
+from worblehat.services.metadata_fetchers.OutlandScraperFetcher import (
+    OutlandScraperFetcher,
+)
 
 
 # The order of these fetchers determines the priority of the sources.
@@ -46,14 +48,16 @@ def fetch_metadata_from_multiple_sources(isbn: str, strict=False) -> list[BookMe
 
     The results are always ordered in the same way as the fetchers are listed in the FETCHERS list.
     """
-    isbn = isbn.replace('-', '').replace('_', '').strip().lower()
+    isbn = isbn.replace("-", "").replace("_", "").strip().lower()
     if len(isbn) != 10 and len(isbn) != 13 and not isbn.isnumeric():
-        raise ValueError('Invalid ISBN')
+        raise ValueError("Invalid ISBN")
 
     results: list[BookMetadata] = []
 
     with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetcher.fetch_metadata, isbn) for fetcher in FETCHERS]
+        futures = [
+            executor.submit(fetcher.fetch_metadata, isbn) for fetcher in FETCHERS
+        ]
 
     for future in futures:
         result = future.result()
@@ -67,14 +71,15 @@ def fetch_metadata_from_multiple_sources(isbn: str, strict=False) -> list[BookMe
             if strict:
                 raise e
             else:
-                print(f'Invalid metadata: {e}')
+                print(f"Invalid metadata: {e}")
                 results.remove(result)
 
     return sort_metadata_by_priority(results)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pprint import pprint
-    isbn = '0132624788'
+
+    isbn = "0132624788"
     metadata = fetch_metadata_from_multiple_sources(isbn)
     pprint(metadata)

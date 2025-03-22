@@ -10,18 +10,19 @@ from worblehat.services.config import Config
 from .blueprints.main import main
 from .database import db
 
+
 def create_app(args: dict[str, any] | None = None):
     app = Flask(__name__)
 
-    app.config.update(Config['flask'])
+    app.config.update(Config["flask"])
     app.config.update(Config._config)
-    app.config['SQLALCHEMY_DATABASE_URI'] = Config.db_string()
-    app.config['SQLALCHEMY_ECHO'] = Config['logging.debug_sql']
+    app.config["SQLALCHEMY_DATABASE_URI"] = Config.db_string()
+    app.config["SQLALCHEMY_ECHO"] = Config["logging.debug_sql"]
 
     db.init_app(app)
 
     with app.app_context():
-        if not inspect(db.engine).has_table('Bookcase'):
+        if not inspect(db.engine).has_table("Bookcase"):
             Base.metadata.create_all(db.engine)
             seed_data()
 
@@ -31,8 +32,9 @@ def create_app(args: dict[str, any] | None = None):
 
     return app
 
+
 def configure_admin(app):
-    admin = Admin(app, name='Worblehat', template_mode='bootstrap3')
+    admin = Admin(app, name="Worblehat", template_mode="bootstrap3")
     admin.add_view(ModelView(Author, db.session))
     admin.add_view(ModelView(Bookcase, db.session))
     admin.add_view(ModelView(BookcaseItem, db.session))

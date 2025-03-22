@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    Integer,
     ForeignKey,
     SmallInteger,
     Text,
@@ -16,6 +15,7 @@ from sqlalchemy.orm import (
 
 from .Base import Base
 from .mixins import UidMixin
+
 if TYPE_CHECKING:
     from .Bookcase import Bookcase
     from .BookcaseItem import BookcaseItem
@@ -23,22 +23,23 @@ if TYPE_CHECKING:
 # NOTE: Booshelfs are 0 indexed for both rows and columns,
 #       where cell 0-0 is placed in the lower right corner.
 
+
 class BookcaseShelf(Base, UidMixin):
     __table_args__ = (
         UniqueConstraint(
-            'column',
-            'fk_bookcase_uid',
-            'row',
+            "column",
+            "fk_bookcase_uid",
+            "row",
         ),
     )
     description: Mapped[str | None] = mapped_column(Text)
     row: Mapped[int] = mapped_column(SmallInteger)
     column: Mapped[int] = mapped_column(SmallInteger)
 
-    fk_bookcase_uid: Mapped[int] = mapped_column(ForeignKey('Bookcase.uid'))
+    fk_bookcase_uid: Mapped[int] = mapped_column(ForeignKey("Bookcase.uid"))
 
-    bookcase: Mapped[Bookcase] = relationship(back_populates='shelfs')
-    items: Mapped[set[BookcaseItem]] = relationship(back_populates='shelf')
+    bookcase: Mapped[Bookcase] = relationship(back_populates="shelfs")
+    items: Mapped[set[BookcaseItem]] = relationship(back_populates="shelf")
 
     def __init__(
         self,
@@ -53,7 +54,7 @@ class BookcaseShelf(Base, UidMixin):
         self.description = description
 
     def short_str(self) -> str:
-        result = f'{self.column}-{self.row}'
+        result = f"{self.column}-{self.row}"
         if self.description is not None:
-            result += f' [{self.description}]'
+            result += f" [{self.description}]"
         return result
