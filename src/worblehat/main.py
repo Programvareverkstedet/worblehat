@@ -85,6 +85,12 @@ def main():
             from .devscripts.seed_test_data import main
 
             main(sql_session)
+        elif args.script == "batch-scanner":
+            from .devscripts.batch_scanner import BatchScanner
+
+            result = BatchScanner(sql_session).cmdloop()
+
+            print(result)
         else:
             print(devscripts_arg_parser.format_help())
             exit(1)

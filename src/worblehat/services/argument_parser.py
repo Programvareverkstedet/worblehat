@@ -51,6 +51,11 @@ devscripts_subparsers.add_parser(
     help="Seed data tailorded for testing the deadline daemon, into the database",
 )
 
+devscripts_subparsers.add_parser(
+    "batch-scanner",
+    help="REPL optimized for scanning in tons of books",
+)
+
 arg_parser.add_argument(
     "-V",
     "--version",
