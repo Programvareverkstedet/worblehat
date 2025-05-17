@@ -11,7 +11,7 @@ from worblehat.models import (
 )
 
 
-CSV_FILE = Path(__file__).parent.parent.parent / "data" / "arbeidsrom_smal_hylle_5.csv"
+CSV_FILE = Path(__file__).parent.parent.parent.parent / "data" / "arbeidsrom_smal_hylle_5.csv"
 
 
 def clear_db(sql_session):
@@ -66,7 +66,7 @@ def main(sql_session):
         next(csv_reader)
         for row in csv_reader:
             item = BookcaseItem(
-                isbn=row[0],
+                isbn=int(row[0]),
                 name=row[1],
             )
             item.media_type = media_type
