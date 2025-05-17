@@ -11,7 +11,11 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-Config.load_configuration({})
+config_attrs = {}
+if (config_path := context.get_x_argument(as_dictionary=True).get('config', None)):
+    config_attrs['config_file'] = config_path
+
+Config.load_configuration(config_attrs)
 
 config.set_main_option("sqlalchemy.url", Config.db_string())
 
