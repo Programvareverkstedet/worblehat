@@ -9,7 +9,7 @@ class Config:
     This class is a singleton which holds the configuration for the
     application. It is initialized by calling `Config.load_configuration()`
     with a dictionary of arguments. The arguments are usually the result
-    of calling `vars(arg_parser.parse_args())` where `arg_parser` i    s the
+    of calling `vars(arg_parser.parse_args())` where `arg_parser` is the
     argument parser from `worblehat/services/argument_parser.py`.
 
     The class also provides some utility functions for accessing several
