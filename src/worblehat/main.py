@@ -17,7 +17,12 @@ from .flaskapp.wsgi_prod import main as flask_prod_main
 
 
 def _print_version() -> None:
-    from worblehat import __version__
+    from importlib.metadata import version, PackageNotFoundError
+
+    try:
+        __version__ = version("worblehat")
+    except PackageNotFoundError:
+        __version__ = "unknown"
 
     print(f"Worblehat version {__version__}")
 
