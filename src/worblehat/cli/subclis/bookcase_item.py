@@ -51,7 +51,12 @@ class BookcaseItemCli(NumberedCmd):
         return _selected_bookcase_item_prompt(self.bookcase_item)
 
     def do_update_data(self, _: str):
-        item = create_bookcase_item_from_isbn(self.sql_session, self.bookcase_item.isbn)
+        item = create_bookcase_item_from_isbn(self.sql_session, str(self.bookcase_item.isbn))
+
+        if item is None:
+            print("Error: could not fetch metadata for this item")
+            return
+
         self.bookcase_item.name = item.name
         # TODO: Remove any old authors
         self.bookcase_item.authors = item.authors
