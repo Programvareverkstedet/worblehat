@@ -29,7 +29,8 @@ def is_valid_isbn(isbn: str) -> bool:
 
 
 def create_bookcase_item_from_isbn(
-    isbn: str, sql_session: Session
+    isbn: str,
+    sql_session: Session,
 ) -> BookcaseItem | None:
     """
     This function fetches metadata for the given ISBN and creates a BookcaseItem from it.
