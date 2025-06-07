@@ -1,7 +1,12 @@
 {
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-  outputs = { self, nixpkgs }: let
+    libdib.url = "git+https://git.pvv.ntnu.no/Projects/libdib.git";
+    libdib.inputs.nixpkgs.follows = "nixpkgs";
+  };
+
+  outputs = inputs@{ self, nixpkgs, ... }: let
     systems = [
       "x86_64-linux"
       "aarch64-linux"
@@ -10,7 +15,12 @@
     ];
 
     forAllSystems = f: nixpkgs.lib.genAttrs systems (system: let
-      pkgs = nixpkgs.legacyPackages.${system};
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [
+          inputs.libdib.overlays.default
+        ];
+      };
     in f system pkgs);
 
     inherit (nixpkgs) lib;
@@ -28,6 +38,7 @@
       })
       flask-sqlalchemy
       isbnlib
+      libdib
       psycopg2-binary
       python-dotenv
       requests
