@@ -70,14 +70,20 @@
 
     packages = forAllSystems (system: pkgs: {
       default = self.packages.${system}.worblehat;
-      worblehat = with pkgs.python3Packages; buildPythonApplication {
-        pname = "worblehat";
-        version = "0.1.0";
+      worblehat = let
+        inherit (pkgs) python3Packages;
+        pyproject = lib.pipe ./pyproject.toml [
+          builtins.readFile
+          builtins.fromTOML
+        ];
+      in python3Packages.buildPythonApplication {
+        pname = pyproject.project.name;
+        version = pyproject.project.version;
         src = ./.;
 
         format = "pyproject";
 
-        build-system = [ hatchling ];
+        build-system = with python3Packages; [ hatchling ];
         dependencies = deps pkgs.python3Packages;
 
         meta.mainProgram = "worblehat";
