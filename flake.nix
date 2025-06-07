@@ -70,7 +70,7 @@
 
     packages = forAllSystems (system: pkgs: {
       default = self.packages.${system}.worblehat;
-      worblehat = with pkgs.python3Packages; buildPythonPackage {
+      worblehat = with pkgs.python3Packages; buildPythonApplication {
         pname = "worblehat";
         version = "0.1.0";
         src = ./.;
