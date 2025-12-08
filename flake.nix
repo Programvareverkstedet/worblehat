@@ -79,7 +79,7 @@
       in python3Packages.buildPythonApplication {
         pname = pyproject.project.name;
         version = pyproject.project.version;
-        src = ./.;
+        src = lib.cleanSource ./.;
 
         format = "pyproject";
 
