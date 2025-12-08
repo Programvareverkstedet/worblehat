@@ -7,17 +7,17 @@ license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-  "alembic>=1.13.3",
-  "beautifulsoup4>=4.12.3",
-  "click>=8.1.7",
-  "flask-admin>=1.6.1",
-  "flask-sqlalchemy>=3.1.1",
-  "flask>=3.0.3",
-  "isbnlib>=3.10.14",
+  "alembic>=1.17",
+  "beautifulsoup4>=4.14",
+  "click>=8.3",
+  "flask-admin>=2.0",
+  "flask-sqlalchemy>=3.1",
+  "flask>=3.0",
+  "isbnlib>=3.10",
   "libdib",
-  "psycopg2-binary>=2.9.9",
-  "requests>=2.32.3",
-  "sqlalchemy>=2.0.34",
+  "psycopg2-binary>=2.9",
+  "requests>=2.32",
+  "sqlalchemy>=2.0",
 ]
 
 [dependency-groups]
