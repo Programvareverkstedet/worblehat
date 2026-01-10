@@ -1,17 +1,18 @@
 import csv
-
 from pathlib import Path
 
 from worblehat.models import (
     Bookcase,
     BookcaseItem,
     BookcaseShelf,
-    MediaType,
     Language,
+    MediaType,
 )
 
-
-CSV_FILE = Path(__file__).parent.parent.parent.parent / "data" / "arbeidsrom_smal_hylle_5.csv"
+CSV_FILE = (
+    Path(__file__).parent.parent.parent.parent / "data" / "arbeidsrom_smal_hylle_5.csv"
+)
+LANGUAGE_FILE = Path(__file__).parent.parent.parent.parent / "data" / "iso639_1.csv"
 
 
 def clear_db(sql_session):
@@ -32,11 +33,11 @@ def main(sql_session):
     )
     sql_session.add(media_type)
 
-    language = Language(
-        name="Norwegian",
-        iso639_1_code="no",
-    )
-    sql_session.add(language)
+    with open(LANGUAGE_FILE, newline="") as langs:
+        t = csv.reader(langs, delimiter=",", quotechar="|")
+        for row in t:
+            language = Language(name=row[1], iso639_1_code=row[0])
+            sql_session.add(language)
 
     seed_case = Bookcase(
         name="seed_case",

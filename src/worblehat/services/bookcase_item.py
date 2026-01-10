@@ -1,14 +1,13 @@
 import isbnlib
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .metadata_fetchers import fetch_metadata_from_multiple_sources
 from ..models import (
     Author,
     BookcaseItem,
     Language,
 )
+from .metadata_fetchers import fetch_metadata_from_multiple_sources
 
 
 def is_valid_pvv_isbn(isbn: str) -> bool:
