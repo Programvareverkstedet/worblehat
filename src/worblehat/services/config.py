@@ -76,12 +76,15 @@ class Config:
 
         elif db_type == "postgresql":
             db_config = cls._config.get("database").get("postgresql")
-            hostname = db_config.get("hostname")
+            host = db_config.get("host")
             port = db_config.get("port")
             username = db_config.get("username")
             password = cls.read_password(db_config.get("password"))
             database = db_config.get("database")
-            return f"psycopg2+postgresql://{username}:{password}@{hostname}:{port}/{database}"
+            if host.startswith("/"):
+                return f"postgresql+psycopg2://{username}:{password}@/{database}?host={host}"
+            else:
+                return f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}"
         else:
             print(f"Error: unknown database type '{db_config.get('type')}'")
             exit(1)
