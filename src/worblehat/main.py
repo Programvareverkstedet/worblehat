@@ -72,6 +72,8 @@ def main():
         database_url = Config.db_string()
         engine = create_engine(database_url)
         Base.metadata.create_all(engine)
+        print(f"Database schema created at '{Config.db_string_no_password()}'")
+        exit(0)
 
     if args.command == "devscripts":
         sql_session = _connect_to_database(echo=Config["logging.debug_sql"])

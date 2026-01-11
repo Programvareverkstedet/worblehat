@@ -90,6 +90,28 @@ class Config:
             exit(1)
 
     @classmethod
+    def db_string_no_password(cls) -> str:
+        db_type = cls._config.get("database").get("type")
+
+        if db_type == "sqlite":
+            path = Path(cls._config.get("database").get("sqlite").get("path"))
+            return f"sqlite:///{path.absolute()}"
+
+        elif db_type == "postgresql":
+            db_config = cls._config.get("database").get("postgresql")
+            host = db_config.get("host")
+            port = db_config.get("port")
+            username = db_config.get("username")
+            database = db_config.get("database")
+            if host.startswith("/"):
+                return f"postgresql+psycopg2://{username}:<password>@/{database}?host={host}"
+            else:
+                return f"postgresql+psycopg2://{username}:<password>@{host}:{port}/{database}"
+        else:
+            print(f"Error: unknown database type '{db_config.get('type')}'")
+            exit(1)
+
+    @classmethod
     def debug(cls) -> str:
         return pformat(cls._config)
 
