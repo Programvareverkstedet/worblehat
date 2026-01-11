@@ -23,3 +23,5 @@ dist/
 result
 
 config.toml
+
+*.qcow2

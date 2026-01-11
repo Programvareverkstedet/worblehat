@@ -47,13 +47,34 @@
 
   in {
     apps = forAllSystems (system: pkgs: let
-      mkApp = package: {
+      mkApp = program: description: {
         type = "app";
-        program = lib.getExe package;
+        program = toString program;
+        meta = {
+          inherit description;
+        };
       };
+      mkVm = name: mkApp "${self.nixosConfigurations.${name}.config.system.build.vm}/bin/run-nixos-vm";
     in {
-      default = mkApp self.packages.${system}.default;
+      default = self.apps.${system}.worblehat;
+      worblehat = mkApp (lib.getExe self.packages.${system}.worblehat) "Run worblehat without any setup";
+      vm = mkVm "vm" "Start a NixOS VM with worblehat installed in kiosk-mode";
+      vm-non-kiosk = mkVm "vm-non-kiosk" "Start a NixOS VM with worblehat installed in nonkiosk-mode";
     });
+
+    nixosModules.default = import ./nix/module.nix;
+
+    nixosConfigurations = {
+      vm = import ./nix/nixos-configurations/vm.nix { inherit self nixpkgs; };
+      vm-non-kiosk = import ./nix/nixos-configurations/vm-non-kiosk.nix { inherit self nixpkgs; };
+    };
+
+    overlays = {
+      default = self.overlays.worblehat;
+      worblehat = final: prev: {
+        inherit (self.packages.${prev.stdenv.hostPlatform.system}) worblehat;
+      };
+    };
 
     devShells = forAllSystems (_: pkgs: {
       default = pkgs.mkShell {
@@ -65,8 +86,6 @@
         ];
       };
     });
-
-    overlays.default = final: prev: self.packages.${final.system};
 
     packages = forAllSystems (system: pkgs: {
       default = self.packages.${system}.worblehat;

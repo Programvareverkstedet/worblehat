@@ -44,3 +44,29 @@ Unless provided through the `--config` flag, program will automatically look for
 - `/var/lib/worblehat/config.toml`
 
 Run `uv run worblehat --help` for more info
+
+## Development with nix
+
+> [!NOTE]
+> We have created some nix code to generate a QEMU VM with a setup similar to a production deployment
+> There is not necessarily any VMs running in a production setup, and if so then at least not this VM.
+> It is mainly there for easy access to interactive testing, as well as for testing the NixOS module.
+
+You can easily start developing this with nix, by running the test VM:
+
+```console
+nix run .#vm
+
+# Or if you need access to a proper shell in the VM as well:
+nix run .#vm-non-kiosk
+```
+
+You can also build the nix package, or run the executable directly:
+
+```
+# Build package
+nix build .#
+
+# Run the executable (after building package)
+nix run .#
+```
