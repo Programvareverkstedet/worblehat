@@ -9,12 +9,12 @@ type = 'sqlite'
 [database.sqlite]
 path = './worblehat.sqlite'
 
-[database.postgres]
+[database.postgresql]
 host = 'localhost'
 port = 5432
 username = 'worblehat'
 password = '/var/lib/worblehat/db-password' # path or plain text
-name = 'worblehat'
+database = 'worblehat'
 
 # See https://flask.palletsprojects.com/en/2.3.x/config/
 [flask]
