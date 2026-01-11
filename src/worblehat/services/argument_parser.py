@@ -20,6 +20,10 @@ subparsers.add_parser(
     help="Initialize a single pass of the daemon which sends deadline emails",
 )
 subparsers.add_parser(
+    "create-db",
+    help="Create the database schema in the database specified in the configuration",
+)
+subparsers.add_parser(
     "cli",
     help="Start the command line interface",
 )

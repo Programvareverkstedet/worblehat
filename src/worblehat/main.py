@@ -1,3 +1,4 @@
+from worblehat.models import Base
 import logging
 from pprint import pformat
 
@@ -66,6 +67,11 @@ def main():
         sql_session = _connect_to_database(echo=Config["logging.debug_sql"])
         WorblehatCli.run_with_safe_exit_wrapper(sql_session)
         exit(0)
+
+    if args.command == "create-db":
+        database_url = Config.db_string()
+        engine = create_engine(database_url)
+        Base.metadata.create_all(engine)
 
     if args.command == "devscripts":
         sql_session = _connect_to_database(echo=Config["logging.debug_sql"])
