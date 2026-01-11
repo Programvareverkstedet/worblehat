@@ -20,7 +20,7 @@ class Config:
     _expected_config_file_locations = [
         Path("./config.toml"),
         Path("~/.config/worblehat/config.toml"),
-        Path("/var/lib/worblehat/config.toml"),
+        Path("/etc/worblehat/config.toml"),
     ]
 
     def __class_getitem__(cls, name: str) -> Any:
