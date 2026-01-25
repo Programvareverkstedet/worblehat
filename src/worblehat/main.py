@@ -96,7 +96,7 @@ def main():
 
     if args.command == "flask-prod":
         if Config["logging.debug"] or Config["logging.debug_sql"]:
-            logging.warn(
+            logging.warning(
                 "Debug mode is enabled for the production server. This is not recommended."
             )
         flask_prod_main()

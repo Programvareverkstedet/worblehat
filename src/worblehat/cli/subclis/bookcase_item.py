@@ -1,8 +1,5 @@
 from datetime import datetime, timedelta
 from textwrap import dedent
-from sqlalchemy import select
-
-from sqlalchemy.orm import Session
 
 from libdib.repl import (
     InteractiveItemSelector,
@@ -11,6 +8,9 @@ from libdib.repl import (
     format_date,
     prompt_yes_no,
 )
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from worblehat.models import (
     Bookcase,
     BookcaseItem,
@@ -51,7 +51,10 @@ class BookcaseItemCli(NumberedCmd):
         return _selected_bookcase_item_prompt(self.bookcase_item)
 
     def do_update_data(self, _: str):
-        item = create_bookcase_item_from_isbn(str(self.bookcase_item.isbn), self.sql_session)
+        item = create_bookcase_item_from_isbn(
+            str(self.bookcase_item.isbn),
+            self.sql_session,
+        )
 
         if item is None:
             print("Error: could not fetch metadata for this item")
@@ -207,7 +210,7 @@ class BookcaseItemCli(NumberedCmd):
             select(BookcaseItemBorrowingQueue)
             .where(
                 BookcaseItemBorrowingQueue.item == self.bookcase_item,
-                BookcaseItemBorrowingQueue.item_became_available_time == None,
+                BookcaseItemBorrowingQueue.item_became_available_time is None,
             )
             .order_by(BookcaseItemBorrowingQueue.entered_queue_time)
         ).all()
