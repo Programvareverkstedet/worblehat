@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
@@ -9,6 +10,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import (
     Mapped,
+    Session,
     mapped_column,
     relationship,
 )
@@ -18,8 +20,8 @@ from .mixins import (
     UidMixin,
 )
 from .xref_tables import (
-    Item_Category,
     Item_Author,
+    Item_Category,
 )
 
 if TYPE_CHECKING:
@@ -35,7 +37,7 @@ from worblehat.flaskapp.database import db
 
 
 class BookcaseItem(Base, UidMixin):
-    isbn: Mapped[int] = mapped_column(String, unique=True, index=True)
+    isbn: Mapped[str] = mapped_column(String, unique=True, index=True)
     name: Mapped[str] = mapped_column(Text, index=True)
     owner: Mapped[str] = mapped_column(String, default="PVV")
     amount: Mapped[int] = mapped_column(SmallInteger, default=1)
@@ -49,7 +51,7 @@ class BookcaseItem(Base, UidMixin):
     language: Mapped[Language] = relationship()
     borrowings: Mapped[set[BookcaseItemBorrowing]] = relationship(back_populates="item")
     borrowing_queue: Mapped[set[BookcaseItemBorrowingQueue]] = relationship(
-        back_populates="item"
+        back_populates="item",
     )
 
     categories: Mapped[set[Category]] = relationship(
@@ -64,9 +66,9 @@ class BookcaseItem(Base, UidMixin):
     def __init__(
         self,
         name: str,
-        isbn: int | None = None,
+        isbn: str | None = None,
         owner: str = "PVV",
-    ):
+    ) -> None:
         self.name = name
         self.isbn = isbn
         self.owner = owner

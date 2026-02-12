@@ -37,7 +37,8 @@ subparsers.add_parser(
 )
 
 devscripts_arg_parser = subparsers.add_parser(
-    "devscripts", help="Run development scripts"
+    "devscripts",
+    help="Run development scripts",
 )
 devscripts_subparsers = devscripts_arg_parser.add_subparsers(dest="script")
 

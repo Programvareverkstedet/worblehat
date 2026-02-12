@@ -4,8 +4,8 @@ from flask_admin.contrib.sqla import ModelView
 from sqlalchemy import inspect
 
 from worblehat.models import *
-from worblehat.services.seed_test_data import seed_data
 from worblehat.services.config import Config
+from worblehat.services.seed_test_data import seed_data
 
 from .blueprints.main import main
 from .database import db
@@ -33,7 +33,7 @@ def create_app(args: dict[str, any] | None = None):
     return app
 
 
-def configure_admin(app):
+def configure_admin(app) -> None:
     admin = Admin(app, name="Worblehat", template_mode="bootstrap3")
     admin.add_view(ModelView(Author, db.session))
     admin.add_view(ModelView(Bookcase, db.session))

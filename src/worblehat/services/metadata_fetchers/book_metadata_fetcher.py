@@ -7,13 +7,11 @@ from concurrent.futures import ThreadPoolExecutor
 
 from worblehat.services.metadata_fetchers.BookMetadata import BookMetadata
 from worblehat.services.metadata_fetchers.BookMetadataFetcher import BookMetadataFetcher
-
 from worblehat.services.metadata_fetchers.GoogleBooksFetcher import GoogleBooksFetcher
 from worblehat.services.metadata_fetchers.OpenLibraryFetcher import OpenLibraryFetcher
 from worblehat.services.metadata_fetchers.OutlandScraperFetcher import (
     OutlandScraperFetcher,
 )
-
 
 # The order of these fetchers determines the priority of the sources.
 # The first fetcher in the list has the highest priority.
@@ -38,7 +36,7 @@ def sort_metadata_by_priority(metadata: list[BookMetadata]) -> list[BookMetadata
     return sorted(metadata, key=lambda m: FETCHER_SOURCE_IDS.index(m.source))
 
 
-def fetch_metadata_from_multiple_sources(isbn: str, strict=False) -> list[BookMetadata]:
+def fetch_metadata_from_multiple_sources(isbn: str, strict: bool=False) -> list[BookMetadata]:
     """
     Returns a list of metadata fetched from multiple sources.
 
@@ -55,9 +53,7 @@ def fetch_metadata_from_multiple_sources(isbn: str, strict=False) -> list[BookMe
     results: list[BookMetadata] = []
 
     with ThreadPoolExecutor() as executor:
-        futures = [
-            executor.submit(fetcher.fetch_metadata, isbn) for fetcher in FETCHERS
-        ]
+        futures = [executor.submit(fetcher.fetch_metadata, isbn) for fetcher in FETCHERS]
 
     for future in futures:
         result = future.result()
@@ -70,9 +66,8 @@ def fetch_metadata_from_multiple_sources(isbn: str, strict=False) -> list[BookMe
         except ValueError as e:
             if strict:
                 raise e
-            else:
-                print(f"Invalid metadata: {e}")
-                results.remove(result)
+            print(f"Invalid metadata: {e}")
+            results.remove(result)
 
     return sort_metadata_by_priority(results)
 

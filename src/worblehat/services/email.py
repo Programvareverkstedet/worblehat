@@ -1,14 +1,12 @@
 import smtplib
-
-from textwrap import indent
-
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from textwrap import indent
 
 from .config import Config
 
 
-def send_email(to: str, subject: str, body: str):
+def send_email(to: str, subject: str, body: str) -> None:
     msg = MIMEMultipart()
     msg["From"] = Config["smtp.from"]
     msg["To"] = to

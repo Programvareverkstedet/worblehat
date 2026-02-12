@@ -1,19 +1,19 @@
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from libdib.repl import (
     InteractiveItemSelector,
     NumberedCmd,
 )
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from worblehat.models import Bookcase, BookcaseShelf
 
 
 class AdvancedOptionsCli(NumberedCmd):
-    def __init__(self, sql_session: Session):
+    def __init__(self, sql_session: Session) -> None:
         super().__init__()
         self.sql_session = sql_session
 
-    def do_add_bookcase(self, _: str):
+    def do_add_bookcase(self, _: str) -> None:
         while True:
             name = input("Name of bookcase> ")
             if name == "":
@@ -22,7 +22,7 @@ class AdvancedOptionsCli(NumberedCmd):
 
             if (
                 self.sql_session.scalars(
-                    select(Bookcase).where(Bookcase.name == name)
+                    select(Bookcase).where(Bookcase.name == name),
                 ).one_or_none()
                 is not None
             ):
@@ -39,13 +39,14 @@ class AdvancedOptionsCli(NumberedCmd):
         self.sql_session.add(bookcase)
         self.sql_session.flush()
 
-    def do_add_bookcase_shelf(self, arg: str):
+    def do_add_bookcase_shelf(self, arg: str) -> None:
         bookcase_selector = InteractiveItemSelector(
             cls=Bookcase,
             sql_session=self.sql_session,
         )
         bookcase_selector.cmdloop()
         bookcase = bookcase_selector.result
+        assert isinstance(bookcase, Bookcase)
 
         while True:
             column = input("Column> ")
@@ -71,12 +72,12 @@ class AdvancedOptionsCli(NumberedCmd):
                     BookcaseShelf.bookcase == bookcase,
                     BookcaseShelf.column == column,
                     BookcaseShelf.row == row,
-                )
+                ),
             ).one_or_none()
             is not None
         ):
             print(
-                f"Error: a bookshelf in bookcase {bookcase.name} with position c{column}-r{row} already exists"
+                f"Error: a bookshelf in bookcase {bookcase.name} with position c{column}-r{row} already exists",
             )
             return
 
@@ -93,7 +94,7 @@ class AdvancedOptionsCli(NumberedCmd):
         self.sql_session.add(shelf)
         self.sql_session.flush()
 
-    def do_list_bookcases(self, _: str):
+    def do_list_bookcases(self, _: str) -> None:
         bookcase_shelfs = self.sql_session.scalars(
             select(BookcaseShelf)
             .join(Bookcase)
@@ -101,7 +102,7 @@ class AdvancedOptionsCli(NumberedCmd):
                 Bookcase.name,
                 BookcaseShelf.column,
                 BookcaseShelf.row,
-            )
+            ),
         ).all()
 
         bookcase_uid = None
@@ -112,7 +113,7 @@ class AdvancedOptionsCli(NumberedCmd):
 
             print(f"  {shelf.short_str()} - {sum(i.amount for i in shelf.items)} items")
 
-    def do_done(self, _: str):
+    def do_done(self, _: str) -> bool:
         return True
 
     funcs = {

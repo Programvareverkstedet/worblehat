@@ -41,7 +41,7 @@ def _selected_bookcase_item_prompt(bookcase_item: BookcaseItem) -> str:
 
 
 class BookcaseItemCli(NumberedCmd):
-    def __init__(self, sql_session: Session, bookcase_item: BookcaseItem):
+    def __init__(self, sql_session: Session, bookcase_item: BookcaseItem) -> None:
         super().__init__()
         self.sql_session = sql_session
         self.bookcase_item = bookcase_item
@@ -50,7 +50,7 @@ class BookcaseItemCli(NumberedCmd):
     def prompt_header(self) -> str:
         return _selected_bookcase_item_prompt(self.bookcase_item)
 
-    def do_update_data(self, _: str):
+    def do_update_data(self, _: str) -> None:
         item = create_bookcase_item_from_isbn(
             str(self.bookcase_item.isbn),
             self.sql_session,
@@ -66,7 +66,7 @@ class BookcaseItemCli(NumberedCmd):
         self.bookcase_item.language = item.language
         self.sql_session.flush()
 
-    def do_edit(self, arg: str):
+    def do_edit(self, arg: str) -> None:
         EditBookcaseCli(self.sql_session, self.bookcase_item, self).cmdloop()
 
     @staticmethod
@@ -83,7 +83,7 @@ class BookcaseItemCli(NumberedCmd):
                     BookcaseItemBorrowing.username == username,
                     BookcaseItemBorrowing.item == self.bookcase_item,
                     BookcaseItemBorrowing.delivered.is_(None),
-                )
+                ),
             ).one_or_none()
             is not None
         )
@@ -94,19 +94,19 @@ class BookcaseItemCli(NumberedCmd):
                 select(BookcaseItemBorrowingQueue).where(
                     BookcaseItemBorrowingQueue.username == username,
                     BookcaseItemBorrowingQueue.item == self.bookcase_item,
-                )
+                ),
             ).one_or_none()
             is not None
         )
 
-    def do_borrow(self, _: str):
+    def do_borrow(self, _: str) -> None:
         active_borrowings = self.sql_session.scalars(
             select(BookcaseItemBorrowing)
             .where(
                 BookcaseItemBorrowing.item == self.bookcase_item,
                 BookcaseItemBorrowing.delivered.is_(None),
             )
-            .order_by(BookcaseItemBorrowing.end_time)
+            .order_by(BookcaseItemBorrowing.end_time),
         ).all()
 
         if len(active_borrowings) >= self.bookcase_item.amount:
@@ -125,7 +125,8 @@ class BookcaseItemCli(NumberedCmd):
             print()
 
             if not prompt_yes_no(
-                "Would you like to enter the borrowing queue?", default=True
+                "Would you like to enter the borrowing queue?",
+                default=True,
             ):
                 return
             username = self._prompt_username()
@@ -139,7 +140,8 @@ class BookcaseItemCli(NumberedCmd):
                 return
 
             borrowing_queue_item = BookcaseItemBorrowingQueue(
-                username, self.bookcase_item
+                username,
+                self.bookcase_item,
             )
             self.sql_session.add(borrowing_queue_item)
             print(f"{username} entered the queue!")
@@ -151,10 +153,10 @@ class BookcaseItemCli(NumberedCmd):
         self.sql_session.add(borrowing_item)
         self.sql_session.flush()
         print(
-            f"Successfully borrowed the item. Please deliver it back by {format_date(borrowing_item.end_time)}"
+            f"Successfully borrowed the item. Please deliver it back by {format_date(borrowing_item.end_time)}",
         )
 
-    def do_deliver(self, _: str):
+    def do_deliver(self, _: str) -> None:
         borrowings = self.sql_session.scalars(
             select(BookcaseItemBorrowing)
             .join(
@@ -162,7 +164,7 @@ class BookcaseItemCli(NumberedCmd):
                 BookcaseItem.uid == BookcaseItemBorrowing.fk_bookcase_item_uid,
             )
             .where(BookcaseItem.isbn == self.bookcase_item.isbn)
-            .order_by(BookcaseItemBorrowing.username)
+            .order_by(BookcaseItemBorrowing.username),
         ).all()
 
         if len(borrowings) == 0:
@@ -191,7 +193,7 @@ class BookcaseItemCli(NumberedCmd):
         self.sql_session.flush()
         print(f"Successfully delivered the item for {borrowing.username}")
 
-    def do_extend_borrowing(self, _: str):
+    def do_extend_borrowing(self, _: str) -> None:
         borrowings = self.sql_session.scalars(
             select(BookcaseItemBorrowing)
             .join(
@@ -199,7 +201,7 @@ class BookcaseItemCli(NumberedCmd):
                 BookcaseItem.uid == BookcaseItemBorrowing.fk_bookcase_item_uid,
             )
             .where(BookcaseItem.isbn == self.bookcase_item.isbn)
-            .order_by(BookcaseItemBorrowing.username)
+            .order_by(BookcaseItemBorrowing.username),
         ).all()
 
         if len(borrowings) == 0:
@@ -212,12 +214,12 @@ class BookcaseItemCli(NumberedCmd):
                 BookcaseItemBorrowingQueue.item == self.bookcase_item,
                 BookcaseItemBorrowingQueue.item_became_available_time is None,
             )
-            .order_by(BookcaseItemBorrowingQueue.entered_queue_time)
+            .order_by(BookcaseItemBorrowingQueue.entered_queue_time),
         ).all()
 
         if len(borrowing_queue) != 0:
             print(
-                "Sorry, you cannot extend the borrowing because there are people waiting in the queue"
+                "Sorry, you cannot extend the borrowing because there are people waiting in the queue",
             )
             print("Borrowing queue:")
             for i, b in enumerate(borrowing_queue):
@@ -235,15 +237,15 @@ class BookcaseItemCli(NumberedCmd):
         borrowing = selector.result
 
         borrowing.end_time = datetime.now() + timedelta(
-            days=int(Config["deadline_daemon.days_before_queue_position_expires"])
+            days=int(Config["deadline_daemon.days_before_queue_position_expires"]),
         )
         self.sql_session.flush()
 
         print(
-            f"Successfully extended the borrowing for {borrowing.username} until {format_date(borrowing.end_time)}"
+            f"Successfully extended the borrowing for {borrowing.username} until {format_date(borrowing.end_time)}",
         )
 
-    def do_done(self, _: str):
+    def do_done(self, _: str) -> bool:
         return True
 
     funcs = {
@@ -275,9 +277,15 @@ class BookcaseItemCli(NumberedCmd):
 
 
 class EditBookcaseCli(NumberedCmd):
+    bookcase_item: BookcaseItem
+    parent: BookcaseItemCli
+
     def __init__(
-        self, sql_session: Session, bookcase_item: BookcaseItem, parent: BookcaseItemCli
-    ):
+        self,
+        sql_session: Session,
+        bookcase_item: BookcaseItem,
+        parent: BookcaseItemCli,
+    ) -> None:
         super().__init__()
         self.sql_session = sql_session
         self.bookcase_item = bookcase_item
@@ -287,7 +295,7 @@ class EditBookcaseCli(NumberedCmd):
     def prompt_header(self) -> str:
         return _selected_bookcase_item_prompt(self.bookcase_item)
 
-    def do_name(self, _: str):
+    def do_name(self, _: str) -> None:
         while True:
             name = input("New name> ")
             if name == "":
@@ -296,7 +304,7 @@ class EditBookcaseCli(NumberedCmd):
 
             if (
                 self.sql_session.scalars(
-                    select(BookcaseItem).where(BookcaseItem.name == name)
+                    select(BookcaseItem).where(BookcaseItem.name == name),
                 ).one_or_none()
                 is not None
             ):
@@ -307,7 +315,7 @@ class EditBookcaseCli(NumberedCmd):
         self.bookcase_item.name = name
         self.sql_session.flush()
 
-    def do_isbn(self, _: str):
+    def do_isbn(self, _: str) -> None:
         while True:
             isbn = input("New ISBN> ")
             if isbn == "":
@@ -320,7 +328,7 @@ class EditBookcaseCli(NumberedCmd):
 
             if (
                 self.sql_session.scalars(
-                    select(BookcaseItem).where(BookcaseItem.isbn == isbn)
+                    select(BookcaseItem).where(BookcaseItem.isbn == isbn),
                 ).one_or_none()
                 is not None
             ):
@@ -335,7 +343,7 @@ class EditBookcaseCli(NumberedCmd):
             self.parent.do_update_data("")
             self.sql_session.flush()
 
-    def do_language(self, _: str):
+    def do_language(self, _: str) -> None:
         language_selector = InteractiveItemSelector(
             Language,
             self.sql_session,
@@ -344,7 +352,7 @@ class EditBookcaseCli(NumberedCmd):
         self.bookcase_item.language = language_selector.result
         self.sql_session.flush()
 
-    def do_media_type(self, _: str):
+    def do_media_type(self, _: str) -> None:
         media_type_selector = InteractiveItemSelector(
             MediaType,
             self.sql_session,
@@ -353,10 +361,8 @@ class EditBookcaseCli(NumberedCmd):
         self.bookcase_item.media_type = media_type_selector.result
         self.sql_session.flush()
 
-    def do_amount(self, _: str):
-        while (
-            new_amount := input(f"New amount [{self.bookcase_item.amount}]> ")
-        ) != "":
+    def do_amount(self, _: str) -> None:
+        while (new_amount := input(f"New amount [{self.bookcase_item.amount}]> ")) != "":
             try:
                 new_amount = int(new_amount)
             except ValueError:
@@ -371,20 +377,21 @@ class EditBookcaseCli(NumberedCmd):
         self.bookcase_item.amount = new_amount
         self.sql_session.flush()
 
-    def do_shelf(self, _: str):
+    def do_shelf(self, _: str) -> None:
         bookcase_selector = InteractiveItemSelector(
             Bookcase,
             self.sql_session,
         )
         bookcase_selector.cmdloop()
         bookcase = bookcase_selector.result
+        assert isinstance(bookcase, Bookcase)
 
         shelf = select_bookcase_shelf(bookcase, self.sql_session)
 
         self.bookcase_item.shelf = shelf
         self.sql_session.flush()
 
-    def do_done(self, _: str):
+    def do_done(self, _: str) -> bool:
         return True
 
     funcs = {

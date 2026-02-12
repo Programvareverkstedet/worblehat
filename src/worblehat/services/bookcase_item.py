@@ -23,7 +23,7 @@ def is_valid_isbn(isbn: str) -> bool:
         [
             isbnlib.is_isbn10(isbn),
             isbnlib.is_isbn13(isbn),
-        ]
+        ],
     )
 
 
@@ -58,7 +58,7 @@ def create_bookcase_item_from_isbn(
 
     if language := metadata.language:
         bookcase_item.language = sql_session.scalars(
-            select(Language).where(Language.iso639_1_code == language)
+            select(Language).where(Language.iso639_1_code == language),
         ).one()
 
     return bookcase_item

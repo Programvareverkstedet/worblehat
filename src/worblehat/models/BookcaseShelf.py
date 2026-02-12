@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
@@ -47,7 +48,7 @@ class BookcaseShelf(Base, UidMixin):
         column: int,
         bookcase: Bookcase,
         description: str | None = None,
-    ):
+    ) -> None:
         self.row = row
         self.column = column
         self.bookcase = bookcase

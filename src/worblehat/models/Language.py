@@ -7,7 +7,6 @@ from sqlalchemy.orm import (
     mapped_column,
 )
 
-
 from .Base import Base
 from .mixins import UidMixin, UniqueNameMixin
 
@@ -19,6 +18,6 @@ class Language(Base, UidMixin, UniqueNameMixin):
         self,
         name: str,
         iso639_1_code: str,
-    ):
+    ) -> None:
         self.name = name
         self.iso639_1_code = iso639_1_code

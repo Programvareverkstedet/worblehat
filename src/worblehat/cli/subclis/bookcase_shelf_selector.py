@@ -1,7 +1,6 @@
+from libdib.repl import InteractiveItemSelector
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
-from libdib.repl import InteractiveItemSelector
 
 from worblehat.models import (
     Bookcase,
@@ -37,10 +36,12 @@ def select_bookcase_shelf(
                 cls.bookcase == bookcase,
                 cls.column == int(arg.split("-")[0]),
                 cls.row == int(arg.split("-")[1]),
-            )
+            ),
         ).all(),
         complete_selection=__complete_bookshelf_selection,
     )
 
     bookcase_shelf_selector.cmdloop()
-    return bookcase_shelf_selector.result
+    result = bookcase_shelf_selector.result
+    assert isinstance(result, BookcaseShelf)
+    return result

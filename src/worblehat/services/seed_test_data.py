@@ -18,7 +18,7 @@ from ..models import (
 )
 
 
-def seed_data(sql_session: Session = db.session):
+def seed_data(sql_session: Session = db.session) -> None:
     media_types = [
         MediaType(name="Book", description="A physical book"),
         MediaType(name="Comic", description="A comic book"),
@@ -50,7 +50,10 @@ def seed_data(sql_session: Session = db.session):
         BookcaseShelf(row=1, column=1, bookcase=bookcases[0]),
         BookcaseShelf(row=2, column=1, bookcase=bookcases[0], description="DOS"),
         BookcaseShelf(
-            row=3, column=1, bookcase=bookcases[0], description="Food for thought"
+            row=3,
+            column=1,
+            bookcase=bookcases[0],
+            description="Food for thought",
         ),
         BookcaseShelf(row=4, column=1, bookcase=bookcases[0], description="CPP"),
         BookcaseShelf(row=0, column=2, bookcase=bookcases[0]),
@@ -60,20 +63,32 @@ def seed_data(sql_session: Session = db.session):
         BookcaseShelf(row=4, column=2, bookcase=bookcases[0], description="/home"),
         BookcaseShelf(row=0, column=3, bookcase=bookcases[0]),
         BookcaseShelf(
-            row=1, column=3, bookcase=bookcases[0], description="Big indonisian island"
+            row=1,
+            column=3,
+            bookcase=bookcases[0],
+            description="Big indonisian island",
         ),
         BookcaseShelf(row=2, column=3, bookcase=bookcases[0]),
         BookcaseShelf(
-            row=3, column=3, bookcase=bookcases[0], description="Div science"
+            row=3,
+            column=3,
+            bookcase=bookcases[0],
+            description="Div science",
         ),
         BookcaseShelf(row=4, column=3, bookcase=bookcases[0], description="/home"),
         BookcaseShelf(row=0, column=4, bookcase=bookcases[0]),
         BookcaseShelf(row=1, column=4, bookcase=bookcases[0]),
         BookcaseShelf(
-            row=2, column=4, bookcase=bookcases[0], description="(not) computer vision"
+            row=2,
+            column=4,
+            bookcase=bookcases[0],
+            description="(not) computer vision",
         ),
         BookcaseShelf(
-            row=3, column=4, bookcase=bookcases[0], description="Low voltage"
+            row=3,
+            column=4,
+            bookcase=bookcases[0],
+            description="Low voltage",
         ),
         BookcaseShelf(row=4, column=4, bookcase=bookcases[0], description="/home"),
         BookcaseShelf(row=0, column=5, bookcase=bookcases[0]),
@@ -111,38 +126,62 @@ def seed_data(sql_session: Session = db.session):
             description="Soviet Phys. Techn. Phys",
         ),
         BookcaseShelf(
-            row=4, column=1, bookcase=bookcases[2], description="Digitalteknikk"
+            row=4,
+            column=1,
+            bookcase=bookcases[2],
+            description="Digitalteknikk",
         ),
         BookcaseShelf(row=5, column=1, bookcase=bookcases[2], description="Material"),
         BookcaseShelf(row=0, column=2, bookcase=bookcases[2]),
         BookcaseShelf(
-            row=1, column=2, bookcase=bookcases[2], description="Assembler / APL"
+            row=1,
+            column=2,
+            bookcase=bookcases[2],
+            description="Assembler / APL",
         ),
         BookcaseShelf(row=2, column=2, bookcase=bookcases[2], description="Internet"),
         BookcaseShelf(row=3, column=2, bookcase=bookcases[2], description="Algorithms"),
         BookcaseShelf(
-            row=4, column=2, bookcase=bookcases[2], description="Soviet Physics Jetp"
+            row=4,
+            column=2,
+            bookcase=bookcases[2],
+            description="Soviet Physics Jetp",
         ),
         BookcaseShelf(
-            row=5, column=2, bookcase=bookcases[2], description="Død og pine"
+            row=5,
+            column=2,
+            bookcase=bookcases[2],
+            description="Død og pine",
         ),
         BookcaseShelf(row=0, column=3, bookcase=bookcases[2]),
         BookcaseShelf(row=1, column=3, bookcase=bookcases[2], description="Web"),
         BookcaseShelf(
-            row=2, column=3, bookcase=bookcases[2], description="Div languages"
+            row=2,
+            column=3,
+            bookcase=bookcases[2],
+            description="Div languages",
         ),
         BookcaseShelf(row=3, column=3, bookcase=bookcases[2], description="Python"),
         BookcaseShelf(row=4, column=3, bookcase=bookcases[2], description="D&D Minis"),
         BookcaseShelf(row=5, column=3, bookcase=bookcases[2], description="Perl"),
         BookcaseShelf(row=0, column=4, bookcase=bookcases[2]),
         BookcaseShelf(
-            row=1, column=4, bookcase=bookcases[2], description="Knuth on programming"
+            row=1,
+            column=4,
+            bookcase=bookcases[2],
+            description="Knuth on programming",
         ),
         BookcaseShelf(
-            row=2, column=4, bookcase=bookcases[2], description="Div languages"
+            row=2,
+            column=4,
+            bookcase=bookcases[2],
+            description="Div languages",
         ),
         BookcaseShelf(
-            row=3, column=4, bookcase=bookcases[2], description="Typesetting"
+            row=3,
+            column=4,
+            bookcase=bookcases[2],
+            description="Typesetting",
         ),
         BookcaseShelf(row=4, column=4, bookcase=bookcases[2]),
         BookcaseShelf(row=0, column=0, bookcase=bookcases[3]),
@@ -251,7 +290,7 @@ def seed_data(sql_session: Session = db.session):
         BookcaseItemBorrowingQueue(username="user", item=borrowed_book_people_in_queue),
     ]
 
-    with open(Path(__file__).parent.parent.parent / "data" / "iso639_1.csv") as f:
+    with (Path(__file__).parent.parent.parent / "data" / "iso639_1.csv").open() as f:
         reader = csv.reader(f)
         languages = [Language(name, code) for (code, name) in reader]
 

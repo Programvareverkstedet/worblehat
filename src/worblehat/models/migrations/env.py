@@ -1,7 +1,7 @@
-from alembic import context
 from logging.config import fileConfig
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+
+from alembic import context
+from sqlalchemy import engine_from_config, pool
 
 from worblehat.models import Base
 from worblehat.services.config import Config
@@ -12,8 +12,8 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 config_attrs = {}
-if (config_path := context.get_x_argument(as_dictionary=True).get('config', None)):
-    config_attrs['config_file'] = config_path
+if config_path := context.get_x_argument(as_dictionary=True).get("config", None):
+    config_attrs["config_file"] = config_path
 
 Config.load_configuration(config_attrs)
 
@@ -22,7 +22,7 @@ config.set_main_option("sqlalchemy.url", Config.db_string())
 
 # This will make sure alembic doesn't generate empty migrations
 # https://stackoverflow.com/questions/70203927/how-to-prevent-alembic-revision-autogenerate-from-making-revision-file-if-it-h
-def _process_revision_directives(context, revision, directives):
+def _process_revision_directives(context, revision, directives) -> None:
     if config.cmd_opts.autogenerate:
         script = directives[0]
         if script.upgrade_ops.is_empty():

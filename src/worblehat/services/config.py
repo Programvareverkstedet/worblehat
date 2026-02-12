@@ -1,7 +1,7 @@
-from pathlib import Path
 import tomllib
-from typing import Any
+from pathlib import Path
 from pprint import pformat
+from typing import Any
 
 
 class Config:
@@ -26,7 +26,7 @@ class Config:
     def __class_getitem__(cls, name: str) -> Any:
         if cls._config is None:
             raise RuntimeError(
-                "Configuration not loaded, call Config.load_configuration() first."
+                "Configuration not loaded, call Config.load_configuration() first.",
             )
 
         __config = cls._config
@@ -39,7 +39,7 @@ class Config:
     @staticmethod
     def read_password(password_field: str) -> str:
         if Path(password_field).is_file():
-            with open(password_field, "r") as f:
+            with Path(password_field).open() as f:
                 return f.read()
         else:
             return password_field
@@ -49,10 +49,12 @@ class Config:
         for path in cls._expected_config_file_locations:
             if path.is_file():
                 return path
+        return None
 
     @classmethod
     def _load_configuration_from_file(
-        cls, config_file_path: str | None
+        cls,
+        config_file_path: str | None,
     ) -> dict[str, any]:
         if config_file_path is None:
             config_file_path = cls._locate_configuration_file()
@@ -61,10 +63,8 @@ class Config:
             print("Error: could not locate configuration file.")
             exit(1)
 
-        with open(config_file_path, "rb") as config_file:
-            args = tomllib.load(config_file)
-
-        return args
+        with config_file_path.open("rb") as config_file:
+            return tomllib.load(config_file)
 
     @classmethod
     def db_string(cls) -> str:
@@ -74,7 +74,7 @@ class Config:
             path = Path(cls._config.get("database").get("sqlite").get("path"))
             return f"sqlite:///{path.absolute()}"
 
-        elif db_type == "postgresql":
+        if db_type == "postgresql":
             db_config = cls._config.get("database").get("postgresql")
             host = db_config.get("host")
             port = db_config.get("port")
@@ -83,11 +83,9 @@ class Config:
             database = db_config.get("database")
             if host.startswith("/"):
                 return f"postgresql+psycopg2://{username}:{password}@/{database}?host={host}"
-            else:
-                return f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}"
-        else:
-            print(f"Error: unknown database type '{db_config.get('type')}'")
-            exit(1)
+            return f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}"
+        print(f"Error: unknown database type '{db_config.get('type')}'")
+        exit(1)
 
     @classmethod
     def db_string_no_password(cls) -> str:
@@ -97,7 +95,7 @@ class Config:
             path = Path(cls._config.get("database").get("sqlite").get("path"))
             return f"sqlite:///{path.absolute()}"
 
-        elif db_type == "postgresql":
+        if db_type == "postgresql":
             db_config = cls._config.get("database").get("postgresql")
             host = db_config.get("host")
             port = db_config.get("port")
@@ -105,11 +103,9 @@ class Config:
             database = db_config.get("database")
             if host.startswith("/"):
                 return f"postgresql+psycopg2://{username}:<password>@/{database}?host={host}"
-            else:
-                return f"postgresql+psycopg2://{username}:<password>@{host}:{port}/{database}"
-        else:
-            print(f"Error: unknown database type '{db_config.get('type')}'")
-            exit(1)
+            return f"postgresql+psycopg2://{username}:<password>@{host}:{port}/{database}"
+        print(f"Error: unknown database type '{db_config.get('type')}'")
+        exit(1)
 
     @classmethod
     def debug(cls) -> str:

@@ -2,13 +2,11 @@
 A BookMetadataFetcher that webscrapes https://outland.no/
 """
 
+import requests
 from bs4 import BeautifulSoup
 
-import requests
-
-from worblehat.services.metadata_fetchers.BookMetadataFetcher import BookMetadataFetcher
 from worblehat.services.metadata_fetchers.BookMetadata import BookMetadata
-
+from worblehat.services.metadata_fetchers.BookMetadataFetcher import BookMetadataFetcher
 
 LANGUAGE_MAP = {
     "Norsk": "no",

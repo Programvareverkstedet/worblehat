@@ -6,9 +6,8 @@ Create Date: 2024-07-31 21:07:13.434012
 
 """
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "7dfbf8a8dec8"
@@ -67,7 +66,9 @@ def upgrade() -> None:
     )
     with op.batch_alter_table("Language", schema=None) as batch_op:
         batch_op.create_index(
-            batch_op.f("ix_Language_iso639_1_code"), ["iso639_1_code"], unique=True
+            batch_op.f("ix_Language_iso639_1_code"),
+            ["iso639_1_code"],
+            unique=True,
         )
         batch_op.create_index(batch_op.f("ix_Language_name"), ["name"], unique=True)
 
@@ -95,7 +96,10 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("uid", name=op.f("pk_BookcaseShelf")),
         sa.UniqueConstraint(
-            "column", "fk_bookcase_uid", "row", name=op.f("uq_BookcaseShelf_column")
+            "column",
+            "fk_bookcase_uid",
+            "row",
+            name=op.f("uq_BookcaseShelf_column"),
         ),
     )
     op.create_table(
@@ -128,7 +132,9 @@ def upgrade() -> None:
     with op.batch_alter_table("BookcaseItem", schema=None) as batch_op:
         batch_op.create_index(batch_op.f("ix_BookcaseItem_isbn"), ["isbn"], unique=True)
         batch_op.create_index(
-            batch_op.f("ix_BookcaseItem_name"), ["name"], unique=False
+            batch_op.f("ix_BookcaseItem_name"),
+            ["name"],
+            unique=False,
         )
 
     op.create_table(
@@ -165,7 +171,7 @@ def upgrade() -> None:
             ["fk_bookcase_item_uid"],
             ["BookcaseItem.uid"],
             name=op.f(
-                "fk_BookcaseItemBorrowingQueue_fk_bookcase_item_uid_BookcaseItem"
+                "fk_BookcaseItemBorrowingQueue_fk_bookcase_item_uid_BookcaseItem",
             ),
         ),
         sa.PrimaryKeyConstraint("uid", name=op.f("pk_BookcaseItemBorrowingQueue")),
@@ -192,7 +198,9 @@ def upgrade() -> None:
             name=op.f("fk_Item_Author_fk_item_uid_BookcaseItem"),
         ),
         sa.PrimaryKeyConstraint(
-            "fk_item_uid", "fk_author_uid", name=op.f("pk_Item_Author")
+            "fk_item_uid",
+            "fk_author_uid",
+            name=op.f("pk_Item_Author"),
         ),
     )
     op.create_table(
@@ -210,7 +218,9 @@ def upgrade() -> None:
             name=op.f("fk_Item_Category_fk_item_uid_BookcaseItem"),
         ),
         sa.PrimaryKeyConstraint(
-            "fk_item_uid", "fk_category_uid", name=op.f("pk_Item_Category")
+            "fk_item_uid",
+            "fk_category_uid",
+            name=op.f("pk_Item_Category"),
         ),
     )
     # ### end Alembic commands ###
@@ -222,7 +232,7 @@ def downgrade() -> None:
     op.drop_table("Item_Author")
     with op.batch_alter_table("BookcaseItemBorrowingQueue", schema=None) as batch_op:
         batch_op.drop_index(
-            batch_op.f("ix_BookcaseItemBorrowingQueue_fk_bookcase_item_uid")
+            batch_op.f("ix_BookcaseItemBorrowingQueue_fk_bookcase_item_uid"),
         )
 
     op.drop_table("BookcaseItemBorrowingQueue")

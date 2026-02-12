@@ -4,8 +4,8 @@ A BookMetadataFetcher for the Open Library API.
 
 import requests
 
-from worblehat.services.metadata_fetchers.BookMetadataFetcher import BookMetadataFetcher
 from worblehat.services.metadata_fetchers.BookMetadata import BookMetadata
+from worblehat.services.metadata_fetchers.BookMetadataFetcher import BookMetadataFetcher
 
 LANGUAGE_MAP = {
     "Norwegian": "no",
@@ -26,11 +26,7 @@ class OpenLibraryFetcher(BookMetadataFetcher):
             author_names = set()
             for author_key in author_keys:
                 key = author_key.get("key")
-                author_name = (
-                    requests.get(f"https://openlibrary.org/{key}.json")
-                    .json()
-                    .get("name")
-                )
+                author_name = requests.get(f"https://openlibrary.org/{key}.json").json().get("name")
                 author_names.add(author_name)
 
             title = jsonInput.get("title")

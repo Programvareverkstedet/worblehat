@@ -1,10 +1,9 @@
 from werkzeug import run_simple
 
-
 from .flaskapp import create_app
 
 
-def main():
+def main() -> None:
     app = create_app()
     run_simple(
         hostname="localhost",

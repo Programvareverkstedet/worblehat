@@ -1,11 +1,12 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
+    DateTime,
     ForeignKey,
     String,
-    DateTime,
 )
 from sqlalchemy.orm import (
     Mapped,
@@ -24,12 +25,14 @@ class BookcaseItemBorrowing(Base, UidMixin):
     username: Mapped[str] = mapped_column(String)
     start_time: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
     end_time: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.now() + timedelta(days=30)
+        DateTime,
+        default=datetime.now() + timedelta(days=30),
     )
     delivered: Mapped[datetime | None] = mapped_column(DateTime, default=None)
 
     fk_bookcase_item_uid: Mapped[int] = mapped_column(
-        ForeignKey("BookcaseItem.uid"), index=True
+        ForeignKey("BookcaseItem.uid"),
+        index=True,
     )
 
     item: Mapped[BookcaseItem] = relationship(back_populates="borrowings")
@@ -38,7 +41,7 @@ class BookcaseItemBorrowing(Base, UidMixin):
         self,
         username: str,
         item: BookcaseItem,
-    ):
+    ) -> None:
         self.username = username
         self.item = item
         self.start_time = datetime.now()

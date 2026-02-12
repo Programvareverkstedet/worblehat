@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import (
@@ -26,5 +27,5 @@ class Author(Base, UidMixin, UniqueNameMixin):
     def __init__(
         self,
         name: str,
-    ):
+    ) -> None:
         self.name = name

@@ -1,6 +1,8 @@
 import csv
 from pathlib import Path
 
+from sqlalchemy.orm import Session
+
 from worblehat.models import (
     Bookcase,
     BookcaseItem,
@@ -9,13 +11,11 @@ from worblehat.models import (
     MediaType,
 )
 
-CSV_FILE = (
-    Path(__file__).parent.parent.parent.parent / "data" / "arbeidsrom_smal_hylle_5.csv"
-)
+CSV_FILE = Path(__file__).parent.parent.parent.parent / "data" / "arbeidsrom_smal_hylle_5.csv"
 LANGUAGE_FILE = Path(__file__).parent.parent.parent.parent / "data" / "iso639_1.csv"
 
 
-def clear_db(sql_session):
+def clear_db(sql_session: Session) -> None:
     sql_session.query(BookcaseItem).delete()
     sql_session.query(BookcaseShelf).delete()
     sql_session.query(Bookcase).delete()
@@ -24,7 +24,7 @@ def clear_db(sql_session):
     sql_session.commit()
 
 
-def main(sql_session):
+def main(sql_session: Session) -> None:
     clear_db(sql_session)
 
     media_type = MediaType(
@@ -33,7 +33,7 @@ def main(sql_session):
     )
     sql_session.add(media_type)
 
-    with open(LANGUAGE_FILE, newline="") as langs:
+    with LANGUAGE_FILE.open(newline="") as langs:
         t = csv.reader(langs, delimiter=",", quotechar="|")
         for row in t:
             language = Language(name=row[1], iso639_1_code=row[0])
@@ -61,13 +61,13 @@ def main(sql_session):
     sql_session.add(seed_shelf_2)
 
     bookcase_items = []
-    with open(CSV_FILE) as csv_file:
+    with CSV_FILE.open() as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=",")
 
         next(csv_reader)
         for row in csv_reader:
             item = BookcaseItem(
-                isbn=int(row[0]),
+                isbn=row[0],
                 name=row[1],
             )
             item.media_type = media_type

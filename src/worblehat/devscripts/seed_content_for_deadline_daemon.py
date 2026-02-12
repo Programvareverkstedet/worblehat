@@ -1,18 +1,19 @@
 from datetime import datetime, timedelta
 
+from sqlalchemy.orm import Session
+
 from worblehat.models import (
     BookcaseItem,
     BookcaseItemBorrowing,
     BookcaseItemBorrowingQueue,
     DeadlineDaemonLastRunDatetime,
 )
-
 from worblehat.services.config import Config
 
 from .seed_test_data import main as seed_test_data_main
 
 
-def clear_db(sql_session):
+def clear_db(sql_session: Session) -> None:
     sql_session.query(BookcaseItemBorrowingQueue).delete()
     sql_session.query(BookcaseItemBorrowing).delete()
     sql_session.query(DeadlineDaemonLastRunDatetime).delete()
@@ -22,19 +23,17 @@ def clear_db(sql_session):
 # NOTE: feel free to change this function to suit your needs
 #       it's just a quick and dirty way to get some data into the database
 #       for testing the deadline daemon - oysteikt 2024
-def main(sql_session):
+def main(sql_session: Session) -> None:
     borrow_warning_days = [
         timedelta(days=int(d))
         for d in Config["deadline_daemon.warn_days_before_borrowing_deadline"]
     ]
     queue_warning_days = [
         timedelta(days=int(d))
-        for d in Config[
-            "deadline_daemon.warn_days_before_expiring_queue_position_deadline"
-        ]
+        for d in Config["deadline_daemon.warn_days_before_expiring_queue_position_deadline"]
     ]
     queue_expire_days = int(
-        Config["deadline_daemon.days_before_queue_position_expires"]
+        Config["deadline_daemon.days_before_queue_position_expires"],
     )
 
     clear_db(sql_session)

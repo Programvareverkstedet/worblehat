@@ -1,25 +1,21 @@
 from dataclasses import dataclass
-from typing import Set
-
 
 # TODO: Add more languages
-LANGUAGES: set[str] = set(
-    [
-        "no",
-        "en",
-        "de",
-        "fr",
-        "es",
-        "it",
-        "sv",
-        "da",
-        "fi",
-        "ru",
-        "zh",
-        "ja",
-        "ko",
-    ]
-)
+LANGUAGES: set[str] = {
+    "no",
+    "en",
+    "de",
+    "fr",
+    "es",
+    "it",
+    "sv",
+    "da",
+    "fi",
+    "ru",
+    "zh",
+    "ja",
+    "ko",
+}
 
 
 @dataclass
@@ -30,11 +26,11 @@ class BookMetadata:
     title: str
     # The source of the metadata provider
     source: str
-    authors: Set[str]
+    authors: set[str]
     language: str | None
     publish_date: str | None
     num_pages: int | None
-    subjects: Set[str]
+    subjects: set[str]
 
     def to_dict(self) -> dict[str, any]:
         return {
@@ -60,7 +56,7 @@ class BookMetadata:
 
         if self.language is not None and self.language not in LANGUAGES:
             raise ValueError(
-                f"Invalid language: {self.language}. Consider adding it to the LANGUAGES set if you think this is a mistake."
+                f"Invalid language: {self.language}. Consider adding it to the LANGUAGES set if you think this is a mistake.",
             )
 
         if self.num_pages is not None and self.num_pages < 0:

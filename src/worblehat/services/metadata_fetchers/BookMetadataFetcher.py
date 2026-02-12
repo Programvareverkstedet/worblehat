@@ -1,5 +1,6 @@
 # base fetcher.
 from abc import ABC, abstractmethod
+
 from .BookMetadata import BookMetadata
 
 

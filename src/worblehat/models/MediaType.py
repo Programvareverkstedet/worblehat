@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Text
@@ -24,6 +25,6 @@ class MediaType(Base, UidMixin, UniqueNameMixin):
         self,
         name: str,
         description: str | None = None,
-    ):
+    ) -> None:
         self.name = name
         self.description = description

@@ -1,7 +1,7 @@
 from .flaskapp import create_app
 
 
-def main():
+def main() -> None:
     app = create_app()
     app.run()
 

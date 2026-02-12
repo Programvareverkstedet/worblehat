@@ -4,8 +4,8 @@ A BookMetadataFetcher for the Google Books API.
 
 import requests
 
-from worblehat.services.metadata_fetchers.BookMetadataFetcher import BookMetadataFetcher
 from worblehat.services.metadata_fetchers.BookMetadata import BookMetadata
+from worblehat.services.metadata_fetchers.BookMetadataFetcher import BookMetadataFetcher
 
 
 class GoogleBooksFetcher(BookMetadataFetcher):

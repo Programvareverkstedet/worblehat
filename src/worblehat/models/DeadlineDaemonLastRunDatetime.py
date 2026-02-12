@@ -1,9 +1,9 @@
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     DateTime,
-    Boolean,
 )
 from sqlalchemy.orm import (
     Mapped,
@@ -23,6 +23,6 @@ class DeadlineDaemonLastRunDatetime(Base):
     uid: Mapped[bool] = mapped_column(Boolean, primary_key=True, default=True)
     time: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
 
-    def __init__(self, time: datetime | None = None):
+    def __init__(self, time: datetime | None = None) -> None:
         if time is not None:
             self.time = time

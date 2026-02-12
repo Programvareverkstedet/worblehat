@@ -1,4 +1,4 @@
-from typing_extensions import Self
+from typing import Self
 
 from sqlalchemy import Text
 from sqlalchemy.orm import (
@@ -10,7 +10,7 @@ from sqlalchemy.orm import (
 from worblehat.flaskapp.database import db
 
 
-class UniqueNameMixin(object):
+class UniqueNameMixin:
     name: Mapped[str] = mapped_column(Text, unique=True, index=True)
 
     @classmethod

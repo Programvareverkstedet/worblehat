@@ -1,24 +1,24 @@
-from worblehat.models import Base
 import logging
 from pprint import pformat
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+from worblehat.models import Base
+
+from .cli import WorblehatCli
+from .deadline_daemon import DeadlineDaemon
+from .flaskapp.wsgi_dev import main as flask_dev_main
+from .flaskapp.wsgi_prod import main as flask_prod_main
 from .services import (
     Config,
     arg_parser,
     devscripts_arg_parser,
 )
 
-from .deadline_daemon import DeadlineDaemon
-from .cli import WorblehatCli
-from .flaskapp.wsgi_dev import main as flask_dev_main
-from .flaskapp.wsgi_prod import main as flask_prod_main
-
 
 def _print_version() -> None:
-    from importlib.metadata import version, PackageNotFoundError
+    from importlib.metadata import PackageNotFoundError, version
 
     try:
         __version__ = version("worblehat")
@@ -41,7 +41,7 @@ def _connect_to_database(**engine_args) -> Session:
     return sql_session
 
 
-def main():
+def main() -> None:
     args = arg_parser.parse_args()
     Config.load_configuration(vars(args))
 
@@ -97,7 +97,7 @@ def main():
     if args.command == "flask-prod":
         if Config["logging.debug"] or Config["logging.debug_sql"]:
             logging.warning(
-                "Debug mode is enabled for the production server. This is not recommended."
+                "Debug mode is enabled for the production server. This is not recommended.",
             )
         flask_prod_main()
         exit(0)
