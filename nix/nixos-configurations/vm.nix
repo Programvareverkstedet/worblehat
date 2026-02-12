@@ -29,6 +29,7 @@ nixpkgs.lib.nixosSystem {
             DEBUG = true;
           };
         };
+        deadline-daemon.enable = true;
       };
     })
   ];

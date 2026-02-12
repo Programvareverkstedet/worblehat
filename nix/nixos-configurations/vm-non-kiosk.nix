@@ -48,6 +48,7 @@ nixpkgs.lib.nixosSystem {
       services.worblehat = {
         enable = true;
         createLocalDatabase = true;
+        deadline-daemon.enable = true;
       };
     })
   ];
