@@ -57,7 +57,15 @@
       mkVm = name: mkApp "${self.nixosConfigurations.${name}.config.system.build.vm}/bin/run-nixos-vm";
     in {
       default = self.apps.${system}.worblehat;
-      worblehat = mkApp (lib.getExe self.packages.${system}.worblehat) "Run worblehat without any setup";
+      worblehat = let
+        app = pkgs.writeShellApplication {
+          name = "worblehat-with-default-config";
+          runtimeInputs = [ self.packages.${system}.worblehat ];
+          text = ''
+            worblehat -c ${./config-template.toml} "$@"
+          '';
+        };
+      in mkApp (lib.getExe app) "Run the worblehat cli with its default config against an SQLite database";
       vm = mkVm "vm" "Start a NixOS VM with worblehat installed in kiosk-mode";
       vm-non-kiosk = mkVm "vm-non-kiosk" "Start a NixOS VM with worblehat installed in nonkiosk-mode";
     });
