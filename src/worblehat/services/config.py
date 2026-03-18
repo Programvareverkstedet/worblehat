@@ -42,6 +42,9 @@ class Config:
             with Path(password_field).open() as f:
                 return f.read().strip()
         else:
+            raise RuntimeError(
+                "Testing, should only use file.",
+            )
             return password_field
 
     @classmethod
