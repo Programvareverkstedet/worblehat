@@ -38,7 +38,8 @@ class Config:
 
     @staticmethod
     def read_password(password_field: str) -> str:
-        if Path(password_field).is_file():
+        file: Path = Path(password_field)
+        if file.is_file() and any([file.stat().st_mode & 0o400 and file.stat().st_uid == os.getuid(), file.stat().st_mode & 0o040 and file.stat().st_gid == os.getgid(), file.stat().st_mode & 0o004]):
             with Path(password_field).open() as f:
                 return f.read().strip()
         else:
