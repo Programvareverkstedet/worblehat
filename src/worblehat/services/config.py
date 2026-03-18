@@ -44,7 +44,7 @@ class Config:
                 return f.read().strip()
         else:
             raise RuntimeError(
-                "Testing, should only use file.",
+                f"Testing, should only use file. {password_field}",
             )
             return password_field
 
