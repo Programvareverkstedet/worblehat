@@ -40,7 +40,7 @@ class Config:
     def read_password(password_field: str) -> str:
         if Path(password_field).is_file():
             with Path(password_field).open() as f:
-                return f.read()
+                return f.read().strip()
         else:
             return password_field
 
