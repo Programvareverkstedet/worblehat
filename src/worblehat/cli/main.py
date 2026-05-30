@@ -75,6 +75,8 @@ class WorblehatCli(NumberedCmd):
         )
         bookcase_selector.cmdloop()
         bookcase = bookcase_selector.result
+        if bookcase == None:
+            return
 
         for shelf in bookcase.shelfs:
             print(shelf.short_str())
@@ -138,6 +140,8 @@ class WorblehatCli(NumberedCmd):
         )
         bookcase_selector.cmdloop()
         bookcase = bookcase_selector.result
+        if bookcase == None:
+            return
 
         bookcase_item.shelf = select_bookcase_shelf(bookcase, self.sql_session)
 
@@ -152,6 +156,8 @@ class WorblehatCli(NumberedCmd):
 
         media_type_selector.cmdloop()
         bookcase_item.media_type = media_type_selector.result
+        if bookcase_item.media_type == None:
+            return
 
         username = input("Who owns this book? [PVV]> ")
         if username != "":

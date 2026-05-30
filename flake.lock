@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1769338528,
-        "narHash": "sha256-t18ZoSt9kaI1yde26ok5s7aFLkap1Q9+/2icVh2zuaE=",
+        "lastModified": 1780178524,
+        "narHash": "sha256-2PcNyNqbGCWBpAMdCU1HxSQmhQiG6evdjxVnPA7w5bQ=",
         "ref": "refs/heads/main",
-        "rev": "7218348163fd8d84df4a6f682c634793e67a3fed",
-        "revCount": 13,
+        "rev": "2406de41ce9d0a1404cbf4e55537e3f720f37f23",
+        "revCount": 15,
         "type": "git",
         "url": "https://git.pvv.ntnu.no/Projects/libdib.git"
       },

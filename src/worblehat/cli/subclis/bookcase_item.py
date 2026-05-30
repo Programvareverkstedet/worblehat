@@ -384,6 +384,8 @@ class EditBookcaseCli(NumberedCmd):
         )
         bookcase_selector.cmdloop()
         bookcase = bookcase_selector.result
+        if bookcase == None:
+            return
         assert isinstance(bookcase, Bookcase)
 
         shelf = select_bookcase_shelf(bookcase, self.sql_session)
