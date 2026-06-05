@@ -3,7 +3,7 @@ debug = true
 debug_sql = false
 
 [database]
-# One of (sqlite, postgres)
+# One of (sqlite, postgresql)
 type = 'sqlite'
 
 [database.sqlite]
