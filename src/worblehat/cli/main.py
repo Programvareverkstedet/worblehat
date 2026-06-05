@@ -133,35 +133,36 @@ class WorblehatCli(NumberedCmd):
             """),
         )
 
-        print("Please select the bookcase where the item is placed:")
-        bookcase_selector = InteractiveItemSelector(
-            cls=Bookcase,
-            sql_session=self.sql_session,
-        )
-        bookcase_selector.cmdloop()
-        bookcase = bookcase_selector.result
-        if bookcase == None:
-            return
+        with self.sql_session.no_autoflush:
+            print("Please select the bookcase where the item is placed:")
+            bookcase_selector = InteractiveItemSelector(
+                cls=Bookcase,
+                sql_session=self.sql_session,
+            )
+            bookcase_selector.cmdloop()
+            bookcase = bookcase_selector.result
+            if bookcase == None:
+                return
 
-        bookcase_item.shelf = select_bookcase_shelf(bookcase, self.sql_session)
+            bookcase_item.shelf = select_bookcase_shelf(bookcase, self.sql_session)
 
-        print("Please select the items media type:")
-        media_type_selector = InteractiveItemSelector(
-            cls=MediaType,
-            sql_session=self.sql_session,
-            default=self.sql_session.scalars(
-                select(MediaType).where(MediaType.name.ilike("book")),
-            ).one(),
-        )
+            print("Please select the items media type:")
+            media_type_selector = InteractiveItemSelector(
+                cls=MediaType,
+                sql_session=self.sql_session,
+                default=self.sql_session.scalars(
+                    select(MediaType).where(MediaType.name.ilike("book")),
+                ).one(),
+            )
 
-        media_type_selector.cmdloop()
-        bookcase_item.media_type = media_type_selector.result
-        if bookcase_item.media_type == None:
-            return
+            media_type_selector.cmdloop()
+            bookcase_item.media_type = media_type_selector.result
+            if bookcase_item.media_type == None:
+                return
 
-        username = input("Who owns this book? [PVV]> ")
-        if username != "":
-            bookcase_item.owner = username
+            username = input("Who owns this book? [PVV]> ")
+            if username != "":
+                bookcase_item.owner = username
 
         self.sql_session.add(bookcase_item)
         self.sql_session.flush()
