@@ -4,17 +4,17 @@ A BookMetadataFetcher for the Google Books API.
 
 import requests
 
-from worblehat.services.metadata_fetchers.BookMetadata import BookMetadata
-from worblehat.services.metadata_fetchers.BookMetadataFetcher import BookMetadataFetcher
+from worblehat.book_data_fetchers.BookData import BookData
+from worblehat.book_data_fetchers.BookDataFetcher import BookDataFetcher
 
 
-class GoogleBooksFetcher(BookMetadataFetcher):
+class GoogleBooksFetcher(BookDataFetcher):
     @classmethod
-    def metadata_source_id(_cls) -> str:
+    def fetcher_id(_cls) -> str:
         return "google_books"
 
     @classmethod
-    def fetch_metadata(cls, isbn: str) -> BookMetadata | None:
+    def try_fetch_data(cls, isbn: str) -> BookData | None:
         try:
             jsonInput = requests.get(
                 "https://www.googleapis.com/books/v1/volumes",
@@ -33,19 +33,13 @@ class GoogleBooksFetcher(BookMetadataFetcher):
         except Exception:
             return None
 
-        return BookMetadata(
+        return BookData(
             isbn=isbn,
             title=title,
-            source=cls.metadata_source_id(),
+            source=cls.fetcher_id(),
             authors=authors,
             language=languages,
             publish_date=publishDate,
             num_pages=numberOfPages,
             subjects=subjects,
         )
-
-
-if __name__ == "__main__":
-    book_data = GoogleBooksFetcher.fetch_metadata("0132624788")
-    book_data.validate()
-    print(book_data)

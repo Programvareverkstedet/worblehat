@@ -4,21 +4,21 @@ A BookMetadataFetcher for the Open Library API.
 
 import requests
 
-from worblehat.services.metadata_fetchers.BookMetadata import BookMetadata
-from worblehat.services.metadata_fetchers.BookMetadataFetcher import BookMetadataFetcher
+from worblehat.book_data_fetchers.BookData import BookData
+from worblehat.book_data_fetchers.BookDataFetcher import BookDataFetcher
 
 LANGUAGE_MAP = {
     "Norwegian": "no",
 }
 
 
-class OpenLibraryFetcher(BookMetadataFetcher):
+class OpenLibraryFetcher(BookDataFetcher):
     @classmethod
-    def metadata_source_id(_cls) -> str:
+    def fetcher_id(_cls) -> str:
         return "open_library"
 
     @classmethod
-    def fetch_metadata(cls, isbn: str) -> BookMetadata | None:
+    def try_fetch_data(cls, isbn: str) -> BookData | None:
         try:
             jsonInput = requests.get(f"https://openlibrary.org/isbn/{isbn}.json").json()
 
@@ -48,19 +48,13 @@ class OpenLibraryFetcher(BookMetadataFetcher):
         except Exception:
             return None
 
-        return BookMetadata(
+        return BookData(
             isbn=isbn,
             title=title,
-            source=cls.metadata_source_id(),
+            source=cls.fetcher_id(),
             authors=author_names,
             language=language,
             publish_date=publishDate,
             num_pages=numberOfPages,
             subjects=subjects,
         )
-
-
-if __name__ == "__main__":
-    book_data = OpenLibraryFetcher.fetch_metadata("9788205530751")
-    book_data.validate()
-    print(book_data)

@@ -2,12 +2,13 @@ import isbnlib
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from worblehat.book_data_fetchers import fetch_book_data_from_multiple_sources
+
 from ..models import (
     Author,
     BookcaseItem,
     Language,
 )
-from .metadata_fetchers import fetch_metadata_from_multiple_sources
 
 
 def is_valid_pvv_isbn(isbn: str) -> bool:
@@ -41,7 +42,7 @@ def create_bookcase_item_from_isbn(
     Please not that the returned BookcaseItem will likely not be fully populated with the required
     data, such as the book's location in the library, and the owner of the book, etc.
     """
-    metadata = fetch_metadata_from_multiple_sources(isbn)
+    metadata = fetch_book_data_from_multiple_sources(isbn)
     if len(metadata) == 0:
         return None
 

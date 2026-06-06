@@ -5,8 +5,8 @@ A BookMetadataFetcher that webscrapes https://outland.no/
 import requests
 from bs4 import BeautifulSoup
 
-from worblehat.services.metadata_fetchers.BookMetadata import BookMetadata
-from worblehat.services.metadata_fetchers.BookMetadataFetcher import BookMetadataFetcher
+from worblehat.book_data_fetchers.BookData import BookData
+from worblehat.book_data_fetchers.BookDataFetcher import BookDataFetcher
 
 LANGUAGE_MAP = {
     "Norsk": "no",
@@ -25,13 +25,13 @@ LANGUAGE_MAP = {
 }
 
 
-class OutlandScraperFetcher(BookMetadataFetcher):
+class OutlandScraperFetcher(BookDataFetcher):
     @classmethod
-    def metadata_source_id(_cls) -> str:
+    def fetcher_id(_cls) -> str:
         return "outland_scraper"
 
     @classmethod
-    def fetch_metadata(cls, isbn: str) -> BookMetadata | None:
+    def try_fetch_data(cls, isbn: str) -> BookData | None:
         try:
             # Find the link to the product page
             response = requests.get(f"https://outland.no/{isbn}")
@@ -89,19 +89,13 @@ class OutlandScraperFetcher(BookMetadataFetcher):
         except Exception:
             return None
 
-        return BookMetadata(
+        return BookData(
             isbn=isbn,
             title=bookData.get("Title"),
-            source=cls.metadata_source_id(),
+            source=cls.fetcher_id(),
             authors=bookData.get("Authors"),
             language=bookData.get("Language"),
             publish_date=bookData.get("PublishDate"),
             num_pages=bookData.get("NumberOfPages"),
             subjects=bookData.get("Subjects"),
         )
-
-
-if __name__ == "__main__":
-    book_data = OutlandScraperFetcher.fetch_metadata("9781947808225")
-    book_data.validate()
-    print(book_data)

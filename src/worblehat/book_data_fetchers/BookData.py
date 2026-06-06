@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 # TODO: Add more languages
 LANGUAGES: set[str] = {
@@ -19,12 +20,14 @@ LANGUAGES: set[str] = {
 
 
 @dataclass
-class BookMetadata:
-    """A class representing metadata for a book."""
+class BookData:
+    """
+    A class representing metadata for a book that we might want to fetch from external sources
+    """
 
     isbn: str
     title: str
-    # The source of the metadata provider
+    # ID of the data fetcher used to fetch this instance
     source: str
     authors: set[str]
     language: str | None
@@ -32,11 +35,11 @@ class BookMetadata:
     num_pages: int | None
     subjects: set[str]
 
-    def to_dict(self) -> dict[str, any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "isbn": self.isbn,
             "title": self.title,
-            "source": self.metadata_source_id(),
+            "source": self.source,
             "authors": set() if self.authors is None else self.authors,
             "language": self.language,
             "publish_date": self.publish_date,
