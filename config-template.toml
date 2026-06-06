@@ -38,3 +38,6 @@ dryrun = false
 warn_days_before_borrowing_deadline = [ 5, 1 ]
 days_before_queue_position_expires = 14
 warn_days_before_expiring_queue_position_deadline = [ 3, 1 ]
+
+[general]
+quit_allowed = true
