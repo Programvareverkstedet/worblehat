@@ -65,7 +65,8 @@ def main() -> None:
 
     if args.command == "cli":
         sql_session = _connect_to_database(echo=Config["logging.debug_sql"])
-        WorblehatCli.run_with_safe_exit_wrapper(sql_session)
+        worblehat = WorblehatCli(sql_session)
+        worblehat.run_with_safe_exit_wrapper()
         exit(0)
 
     if args.command == "create-db":

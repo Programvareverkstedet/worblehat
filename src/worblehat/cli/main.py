@@ -16,6 +16,7 @@ from worblehat.models import *
 from worblehat.services import (
     create_bookcase_item_from_isbn,
     is_valid_isbn,
+    Config,
 )
 
 from .subclis import (
@@ -47,26 +48,13 @@ class WorblehatCli(NumberedCmd):
             self.sql_session_dirty = False
             self.prompt_header = None
 
-    @classmethod
-    def run_with_safe_exit_wrapper(cls, sql_session: Session) -> None:
-        tool = cls(sql_session)
+    def run_with_safe_exit_wrapper(self) -> None:
         while True:
             try:
-                tool.cmdloop()
-            except KeyboardInterrupt:
-                if not tool.sql_session_dirty:
-                    exit(0)
-                try:
-                    print()
-                    if prompt_yes_no(
-                        "Are you sure you want to exit without saving?",
-                        default=False,
-                    ):
-                        raise KeyboardInterrupt
-                except KeyboardInterrupt:
-                    if tool.sql_session is not None:
-                        tool.sql_session.rollback()
-                    exit(0)
+                self.cmdloop()
+            except KeyboardInterrupt:     
+                print("\n\n-----------------\n")
+                self.do_exit("Exit")
 
     def do_show_bookcase(self, arg: str) -> None:
         bookcase_selector = InteractiveItemSelector(
@@ -247,7 +235,8 @@ class WorblehatCli(NumberedCmd):
                 self.sql_session.commit()
             else:
                 self.sql_session.rollback()
-        exit(0)
+        if Config["general.quit_allowed"]:
+            exit(0)
 
     funcs = {
         0: {
