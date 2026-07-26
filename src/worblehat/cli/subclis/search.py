@@ -59,7 +59,9 @@ class SearchCli(NumberedCmd):
         else:
             selector = NumberedItemSelector(
                 items=author,
-                stringify=lambda author: f"{author.name} ({sum(item.amount for item in author.items)} items)",
+                stringify=lambda author: (
+                    f"{author.name} ({sum(item.amount for item in author.items)} items)"
+                ),
             )
             selector.cmdloop()
             if selector.result is None:

@@ -65,10 +65,7 @@ class AdvancedOptionsCli(NumberedCmd):
                 continue
             break
 
-        if (
-            find_bookcase_shelf(self.sql_session, bookcase, column, row)
-            is not None
-        ):
+        if find_bookcase_shelf(self.sql_session, bookcase, column, row) is not None:
             print(
                 f"Error: a bookshelf in bookcase {bookcase.name} with position c{column}-r{row} already exists",
             )

@@ -27,9 +27,7 @@ def search_bookcase_items_by_title(sql_session: Session, text: str) -> list[Book
 def search_bookcase_item_owners(sql_session: Session, text: str) -> list[str]:
     return list(
         sql_session.scalars(
-            select(BookcaseItem.owner)
-            .where(BookcaseItem.owner.ilike(f"%{text}%"))
-            .distinct(),
+            select(BookcaseItem.owner).where(BookcaseItem.owner.ilike(f"%{text}%")).distinct(),
         ).all(),
     )
 

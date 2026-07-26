@@ -17,9 +17,9 @@ from worblehat.queries import (
     list_overdue_borrowings,
 )
 from worblehat.services import (
+    Config,
     create_bookcase_item_from_isbn,
     is_valid_isbn,
-    Config,
 )
 
 from .subclis import (
@@ -55,7 +55,7 @@ class WorblehatCli(NumberedCmd):
         while True:
             try:
                 self.cmdloop()
-            except KeyboardInterrupt:     
+            except KeyboardInterrupt:
                 print("\n\n-----------------\n")
                 self.do_exit("Exit")
 

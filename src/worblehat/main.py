@@ -18,10 +18,10 @@ from .services import (
 
 
 def _print_version() -> None:
-   from ._version import commit_id, version
+    from ._version import commit_id, version
 
-   print(f"Worblehat version {version}, commit {commit_id if commit_id else '<unknown>'}")
-   return
+    print(f"Worblehat version {version}, commit {commit_id if commit_id else '<unknown>'}")
+    return
 
 
 def _connect_to_database(**engine_args) -> Session:

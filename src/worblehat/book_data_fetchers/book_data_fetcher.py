@@ -36,7 +36,7 @@ def sort_data_by_priority(data: list[BookData]) -> list[BookData]:
     return sorted(data, key=lambda m: FETCHER_SOURCE_IDS.index(m.source))
 
 
-def fetch_book_data_from_multiple_sources(isbn: str, strict: bool=False) -> list[BookData]:
+def fetch_book_data_from_multiple_sources(isbn: str, strict: bool = False) -> list[BookData]:
     """
     Returns a list of data fetched from multiple fetchers.
 

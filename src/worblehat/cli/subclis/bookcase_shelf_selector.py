@@ -16,7 +16,7 @@ def select_bookcase_shelf(
     sql_session: Session,
     prompt: str = "Please select the shelf where the item is placed (col-row):",
 ) -> BookcaseShelf:
-    def __complete_bookshelf_selection(session: Session, cls: type, arg: str):
+    def __complete_bookshelf_selection(session: Session, cls: type, arg: str) -> list[str]:
         args = arg.split("-")
         column = None
         row = None
@@ -31,7 +31,7 @@ def select_bookcase_shelf(
         result = list_bookcase_shelf_positions(session, bookcase, column, row)
         return [f"{c}-{r}" for r, c in result]
 
-    def __execute_bookshelf_selection(session: Session, cls: type, arg: str):
+    def __execute_bookshelf_selection(session: Session, cls: type, arg: str) -> list[BookcaseShelf]:
         shelf = find_bookcase_shelf(
             session,
             bookcase,
