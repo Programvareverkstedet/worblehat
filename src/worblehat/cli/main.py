@@ -1,4 +1,3 @@
-from datetime import datetime
 from textwrap import dedent
 
 from libdib.repl import (
@@ -6,13 +5,17 @@ from libdib.repl import (
     NumberedCmd,
     prompt_yes_no,
 )
-from sqlalchemy import (
-    event,
-    select,
-)
+from sqlalchemy import event
 from sqlalchemy.orm import Session
 
 from worblehat.models import *
+from worblehat.queries import (
+    find_bookcase_item_by_isbn,
+    find_media_type_by_name,
+    list_active_borrowings,
+    list_all_queue_items,
+    list_overdue_borrowings,
+)
 from worblehat.services import (
     create_bookcase_item_from_isbn,
     is_valid_isbn,
@@ -72,11 +75,7 @@ class WorblehatCli(NumberedCmd):
                 print(f"  {item.name} - {item.amount} copies")
 
     def do_show_borrowed_queued(self, _: str) -> None:
-        borrowed_items = self.sql_session.scalars(
-            select(BookcaseItemBorrowing)
-            .where(BookcaseItemBorrowing.delivered.is_(None))
-            .order_by(BookcaseItemBorrowing.end_time),
-        ).all()
+        borrowed_items = list_active_borrowings(self.sql_session)
 
         if len(borrowed_items) == 0:
             print("No borrowed items found.")
@@ -89,11 +88,7 @@ class WorblehatCli(NumberedCmd):
 
         print()
 
-        queued_items = self.sql_session.scalars(
-            select(BookcaseItemBorrowingQueue).order_by(
-                BookcaseItemBorrowingQueue.entered_queue_time,
-            ),
-        ).all()
+        queued_items = list_all_queue_items(self.sql_session)
 
         if len(queued_items) == 0:
             print("No queued items found.")
@@ -137,9 +132,7 @@ class WorblehatCli(NumberedCmd):
         media_type_selector = InteractiveItemSelector(
             cls=MediaType,
             sql_session=self.sql_session,
-            default=self.sql_session.scalars(
-                select(MediaType).where(MediaType.name.ilike("book")),
-            ).one(),
+            default=find_media_type_by_name(self.sql_session, "book"),
         )
 
         media_type_selector.cmdloop()
@@ -161,12 +154,10 @@ class WorblehatCli(NumberedCmd):
             return
 
         if (
-            existing_item := self.sql_session.scalars(
-                select(BookcaseItem)
-                .where(BookcaseItem.isbn == isbn)
-                .join(BookcaseItemBorrowing)
-                .join(BookcaseItemBorrowingQueue),
-            ).one_or_none()
+            existing_item := find_bookcase_item_by_isbn(
+                self.sql_session,
+                isbn,
+            )
         ) is not None:
             print(f'\nFound existing item for isbn "{isbn}"')
             BookcaseItemCli(
@@ -191,17 +182,7 @@ class WorblehatCli(NumberedCmd):
             ).cmdloop()
 
     def do_show_slabbedasker(self, _: str) -> None:
-        slubberter = self.sql_session.scalars(
-            select(BookcaseItemBorrowing)
-            .join(BookcaseItem)
-            .where(
-                BookcaseItemBorrowing.end_time < datetime.now(),
-                BookcaseItemBorrowing.delivered.is_(None),
-            )
-            .order_by(
-                BookcaseItemBorrowing.end_time,
-            ),
-        ).all()
+        slubberter = list_overdue_borrowings(self.sql_session)
 
         if len(slubberter) == 0:
             print("No slubberts found. Life is good.")

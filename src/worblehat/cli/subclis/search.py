@@ -2,10 +2,14 @@ from libdib.repl import (
     NumberedCmd,
     NumberedItemSelector,
 )
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from worblehat.models import Author, BookcaseItem
+from worblehat.queries import (
+    list_bookcase_items_by_owner,
+    search_authors_by_name,
+    search_bookcase_item_owners,
+    search_bookcase_items_by_title,
+)
 
 
 class SearchCli(NumberedCmd):
@@ -21,9 +25,7 @@ class SearchCli(NumberedCmd):
         while (input_text := input("Enter title: ")) == "":
             pass
 
-        items = self.sql_session.scalars(
-            select(BookcaseItem).where(BookcaseItem.name.ilike(f"%{input_text}%")),
-        ).all()
+        items = search_bookcase_items_by_title(self.sql_session, input_text)
 
         if len(items) == 0:
             print("No items found.")
@@ -43,9 +45,7 @@ class SearchCli(NumberedCmd):
         while (input_text := input("Enter author name: ")) == "":
             pass
 
-        author = self.sql_session.scalars(
-            select(Author).where(Author.name.ilike(f"%{input_text}%")),
-        ).all()
+        author = search_authors_by_name(self.sql_session, input_text)
 
         if len(author) == 0:
             print("No authors found.")
@@ -80,11 +80,7 @@ class SearchCli(NumberedCmd):
         while (input_text := input("Enter username: ")) == "":
             pass
 
-        users = self.sql_session.scalars(
-            select(BookcaseItem.owner)
-            .where(BookcaseItem.owner.ilike(f"%{input_text}%"))
-            .distinct(),
-        ).all()
+        users = search_bookcase_item_owners(self.sql_session, input_text)
 
         if len(users) == 0:
             print("No users found.")
@@ -100,9 +96,7 @@ class SearchCli(NumberedCmd):
                 return None
             selected_user = selector.result
 
-        items = self.sql_session.scalars(
-            select(BookcaseItem).where(BookcaseItem.owner == selected_user),
-        ).all()
+        items = list_bookcase_items_by_owner(self.sql_session, selected_user)
 
         selector = NumberedItemSelector(
             items=items,

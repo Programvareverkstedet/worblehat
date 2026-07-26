@@ -1,10 +1,13 @@
 from libdib.repl import InteractiveItemSelector
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from worblehat.models import (
     Bookcase,
     BookcaseShelf,
+)
+from worblehat.queries import (
+    find_bookcase_shelf,
+    list_bookcase_shelf_positions,
 )
 
 
@@ -15,29 +18,33 @@ def select_bookcase_shelf(
 ) -> BookcaseShelf:
     def __complete_bookshelf_selection(session: Session, cls: type, arg: str):
         args = arg.split("-")
-        query = select(cls.row, cls.column).where(cls.bookcase == bookcase)
+        column = None
+        row = None
         try:
             if arg != "" and len(args) > 0:
-                query = query.where(cls.column == int(args[0]))
+                column = int(args[0])
             if len(args) > 1:
-                query = query.where(cls.row == int(args[1]))
+                row = int(args[1])
         except ValueError:
             return []
 
-        result = session.execute(query).all()
+        result = list_bookcase_shelf_positions(session, bookcase, column, row)
         return [f"{c}-{r}" for r, c in result]
+
+    def __execute_bookshelf_selection(session: Session, cls: type, arg: str):
+        shelf = find_bookcase_shelf(
+            session,
+            bookcase,
+            int(arg.split("-")[0]),
+            int(arg.split("-")[1]),
+        )
+        return [shelf] if shelf is not None else []
 
     print(prompt)
     bookcase_shelf_selector = InteractiveItemSelector(
         cls=BookcaseShelf,
         sql_session=sql_session,
-        execute_selection=lambda session, cls, arg: session.scalars(
-            select(cls).where(
-                cls.bookcase == bookcase,
-                cls.column == int(arg.split("-")[0]),
-                cls.row == int(arg.split("-")[1]),
-            ),
-        ).all(),
+        execute_selection=__execute_bookshelf_selection,
         complete_selection=__complete_bookshelf_selection,
     )
 

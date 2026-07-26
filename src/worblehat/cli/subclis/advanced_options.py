@@ -2,10 +2,14 @@ from libdib.repl import (
     InteractiveItemSelector,
     NumberedCmd,
 )
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from worblehat.models import Bookcase, BookcaseShelf
+from worblehat.queries import (
+    find_bookcase_by_name,
+    find_bookcase_shelf,
+    list_bookcase_shelfs_ordered,
+)
 
 
 class AdvancedOptionsCli(NumberedCmd):
@@ -20,12 +24,7 @@ class AdvancedOptionsCli(NumberedCmd):
                 print("Error: name cannot be empty")
                 continue
 
-            if (
-                self.sql_session.scalars(
-                    select(Bookcase).where(Bookcase.name == name),
-                ).one_or_none()
-                is not None
-            ):
+            if find_bookcase_by_name(self.sql_session, name) is not None:
                 print(f"Error: a bookcase with name {name} already exists")
                 continue
 
@@ -67,13 +66,7 @@ class AdvancedOptionsCli(NumberedCmd):
             break
 
         if (
-            self.sql_session.scalars(
-                select(BookcaseShelf).where(
-                    BookcaseShelf.bookcase == bookcase,
-                    BookcaseShelf.column == column,
-                    BookcaseShelf.row == row,
-                ),
-            ).one_or_none()
+            find_bookcase_shelf(self.sql_session, bookcase, column, row)
             is not None
         ):
             print(
@@ -95,15 +88,7 @@ class AdvancedOptionsCli(NumberedCmd):
         self.sql_session.flush()
 
     def do_list_bookcases(self, _: str) -> None:
-        bookcase_shelfs = self.sql_session.scalars(
-            select(BookcaseShelf)
-            .join(Bookcase)
-            .order_by(
-                Bookcase.name,
-                BookcaseShelf.column,
-                BookcaseShelf.row,
-            ),
-        ).all()
+        bookcase_shelfs = list_bookcase_shelfs_ordered(self.sql_session)
 
         bookcase_uid = None
         for shelf in bookcase_shelfs:

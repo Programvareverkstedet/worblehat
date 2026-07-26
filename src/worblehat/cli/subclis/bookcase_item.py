@@ -8,7 +8,6 @@ from libdib.repl import (
     format_date,
     prompt_yes_no,
 )
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from worblehat.models import (
@@ -18,6 +17,15 @@ from worblehat.models import (
     BookcaseItemBorrowingQueue,
     Language,
     MediaType,
+)
+from worblehat.queries import (
+    find_bookcase_item_by_isbn,
+    find_bookcase_item_by_name,
+    has_active_borrowing,
+    is_in_borrowing_queue,
+    list_active_borrowings_for_item,
+    list_borrowings_for_isbn,
+    list_pending_queue_items_for_item,
 )
 from worblehat.services.bookcase_item import (
     create_bookcase_item_from_isbn,
@@ -77,37 +85,16 @@ class BookcaseItemCli(NumberedCmd):
                 return username
 
     def _has_active_borrowing(self, username: str) -> bool:
-        return (
-            self.sql_session.scalars(
-                select(BookcaseItemBorrowing).where(
-                    BookcaseItemBorrowing.username == username,
-                    BookcaseItemBorrowing.item == self.bookcase_item,
-                    BookcaseItemBorrowing.delivered.is_(None),
-                ),
-            ).one_or_none()
-            is not None
-        )
+        return has_active_borrowing(self.sql_session, username, self.bookcase_item)
 
     def _has_borrowing_queue_item(self, username: str) -> bool:
-        return (
-            self.sql_session.scalars(
-                select(BookcaseItemBorrowingQueue).where(
-                    BookcaseItemBorrowingQueue.username == username,
-                    BookcaseItemBorrowingQueue.item == self.bookcase_item,
-                ),
-            ).one_or_none()
-            is not None
-        )
+        return is_in_borrowing_queue(self.sql_session, username, self.bookcase_item)
 
     def do_borrow(self, _: str) -> None:
-        active_borrowings = self.sql_session.scalars(
-            select(BookcaseItemBorrowing)
-            .where(
-                BookcaseItemBorrowing.item == self.bookcase_item,
-                BookcaseItemBorrowing.delivered.is_(None),
-            )
-            .order_by(BookcaseItemBorrowing.end_time),
-        ).all()
+        active_borrowings = list_active_borrowings_for_item(
+            self.sql_session,
+            self.bookcase_item,
+        )
 
         if len(active_borrowings) >= self.bookcase_item.amount:
             print("This item is currently not available")
@@ -157,15 +144,7 @@ class BookcaseItemCli(NumberedCmd):
         )
 
     def do_deliver(self, _: str) -> None:
-        borrowings = self.sql_session.scalars(
-            select(BookcaseItemBorrowing)
-            .join(
-                BookcaseItem,
-                BookcaseItem.uid == BookcaseItemBorrowing.fk_bookcase_item_uid,
-            )
-            .where(BookcaseItem.isbn == self.bookcase_item.isbn)
-            .order_by(BookcaseItemBorrowing.username),
-        ).all()
+        borrowings = list_borrowings_for_isbn(self.sql_session, self.bookcase_item.isbn)
 
         if len(borrowings) == 0:
             print("No one seems to have borrowed this item")
@@ -194,28 +173,16 @@ class BookcaseItemCli(NumberedCmd):
         print(f"Successfully delivered the item for {borrowing.username}")
 
     def do_extend_borrowing(self, _: str) -> None:
-        borrowings = self.sql_session.scalars(
-            select(BookcaseItemBorrowing)
-            .join(
-                BookcaseItem,
-                BookcaseItem.uid == BookcaseItemBorrowing.fk_bookcase_item_uid,
-            )
-            .where(BookcaseItem.isbn == self.bookcase_item.isbn)
-            .order_by(BookcaseItemBorrowing.username),
-        ).all()
+        borrowings = list_borrowings_for_isbn(self.sql_session, self.bookcase_item.isbn)
 
         if len(borrowings) == 0:
             print("No one seems to have borrowed this item")
             return
 
-        borrowing_queue = self.sql_session.scalars(
-            select(BookcaseItemBorrowingQueue)
-            .where(
-                BookcaseItemBorrowingQueue.item == self.bookcase_item,
-                BookcaseItemBorrowingQueue.item_became_available_time is None,
-            )
-            .order_by(BookcaseItemBorrowingQueue.entered_queue_time),
-        ).all()
+        borrowing_queue = list_pending_queue_items_for_item(
+            self.sql_session,
+            self.bookcase_item,
+        )
 
         if len(borrowing_queue) != 0:
             print(
@@ -302,12 +269,7 @@ class EditBookcaseCli(NumberedCmd):
                 print("Error: name cannot be empty")
                 continue
 
-            if (
-                self.sql_session.scalars(
-                    select(BookcaseItem).where(BookcaseItem.name == name),
-                ).one_or_none()
-                is not None
-            ):
+            if find_bookcase_item_by_name(self.sql_session, name) is not None:
                 print(f"Error: an item with name {name} already exists")
                 continue
 
@@ -326,12 +288,7 @@ class EditBookcaseCli(NumberedCmd):
                 print("Error: ISBN is not valid")
                 continue
 
-            if (
-                self.sql_session.scalars(
-                    select(BookcaseItem).where(BookcaseItem.isbn == isbn),
-                ).one_or_none()
-                is not None
-            ):
+            if find_bookcase_item_by_isbn(self.sql_session, isbn) is not None:
                 print(f"Error: an item with ISBN {isbn} already exists")
                 continue
 

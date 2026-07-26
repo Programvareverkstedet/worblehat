@@ -2,13 +2,21 @@ import logging
 from datetime import datetime, timedelta
 from textwrap import dedent
 
-from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from worblehat.models import (
     BookcaseItemBorrowing,
     BookcaseItemBorrowingQueue,
     DeadlineDaemonLastRunDatetime,
+)
+from worblehat.queries import (
+    find_last_run,
+    find_next_queue_position,
+    list_close_deadline_borrowings,
+    list_expiring_queue_positions,
+    list_newly_available_queue_items,
+    list_overdue_queue_positions,
+    list_undelivered_overdue_borrowings,
 )
 from worblehat.services.config import Config
 from worblehat.services.email import send_email
@@ -21,9 +29,7 @@ class DeadlineDaemon:
 
         self.sql_session = sql_session
 
-        self.last_run = self.sql_session.scalars(
-            select(DeadlineDaemonLastRunDatetime),
-        ).one_or_none()
+        self.last_run = find_last_run(self.sql_session)
 
         if self.last_run is None:
             logging.info("No previous run found, assuming this is the first run")
@@ -158,16 +164,6 @@ class DeadlineDaemon:
     # EMAIL ROUTINES #
     ##################
 
-    def _sql_subtract_date(self, x: datetime, y: timedelta):
-        if self.sql_session.bind.dialect.name == "sqlite":
-            # SQLite does not support timedelta in queries
-            return func.datetime(x, f"-{y.days} days")
-        if self.sql_session.bind.dialect.name == "postgresql":
-            return x - y
-        raise NotImplementedError(
-            f"Unsupported dialect: {self.sql_session.bind.dialect.name}",
-        )
-
     def send_close_deadline_reminder_mails(self) -> None:
         logging.info("Sending mails for items with a closing deadline")
 
@@ -175,30 +171,22 @@ class DeadlineDaemon:
         days = [int(d) for d in Config["deadline_daemon.warn_days_before_borrowing_deadline"]]
 
         for day in days:
-            borrowings_to_remind = self.sql_session.scalars(
-                select(BookcaseItemBorrowing).where(
-                    self._sql_subtract_date(
-                        BookcaseItemBorrowing.end_time,
-                        timedelta(days=day),
-                    ).between(
-                        self.last_run_datetime,
-                        self.current_run_datetime,
-                    ),
-                    BookcaseItemBorrowing.delivered.is_(None),
-                ),
-            ).all()
+            borrowings_to_remind = list_close_deadline_borrowings(
+                self.sql_session,
+                day,
+                self.last_run_datetime,
+                self.current_run_datetime,
+            )
             for borrowing in borrowings_to_remind:
                 self._send_close_deadline_mail(borrowing)
 
     def send_overdue_mails(self) -> None:
         logging.info("Sending mails for overdue items")
 
-        to_remind = self.sql_session.scalars(
-            select(BookcaseItemBorrowing).where(
-                BookcaseItemBorrowing.end_time < self.current_run_datetime,
-                BookcaseItemBorrowing.delivered.is_(None),
-            ),
-        ).all()
+        to_remind = list_undelivered_overdue_borrowings(
+            self.sql_session,
+            self.current_run_datetime,
+        )
 
         for borrowing in to_remind:
             self._send_overdue_mail(borrowing)
@@ -206,24 +194,11 @@ class DeadlineDaemon:
     def send_newly_available_mails(self) -> None:
         logging.info("Sending mails about newly available items")
 
-        newly_available = self.sql_session.scalars(
-            select(BookcaseItemBorrowingQueue)
-            .join(
-                BookcaseItemBorrowing,
-                BookcaseItemBorrowing.fk_bookcase_item_uid
-                == BookcaseItemBorrowingQueue.fk_bookcase_item_uid,
-            )
-            .where(
-                BookcaseItemBorrowingQueue.expired.is_(False),
-                BookcaseItemBorrowing.delivered.is_not(None),
-                BookcaseItemBorrowing.delivered.between(
-                    self.last_run_datetime,
-                    self.current_run_datetime,
-                ),
-            )
-            .order_by(BookcaseItemBorrowingQueue.entered_queue_time)
-            .group_by(BookcaseItemBorrowingQueue.fk_bookcase_item_uid),
-        ).all()
+        newly_available = list_newly_available_queue_items(
+            self.sql_session,
+            self.last_run_datetime,
+            self.current_run_datetime,
+        )
 
         for queue_item in newly_available:
             logging.info(
@@ -243,23 +218,11 @@ class DeadlineDaemon:
             for d in Config["deadline_daemon.warn_days_before_expiring_queue_position_deadline"]
         ]
         for day in days:
-            queue_positions_to_remind = self.sql_session.scalars(
-                select(BookcaseItemBorrowingQueue)
-                .join(
-                    BookcaseItemBorrowing,
-                    BookcaseItemBorrowing.fk_bookcase_item_uid
-                    == BookcaseItemBorrowingQueue.fk_bookcase_item_uid,
-                )
-                .where(
-                    self._sql_subtract_date(
-                        BookcaseItemBorrowingQueue.item_became_available_time + timedelta(days=day),
-                        timedelta(days=day),
-                    ).between(
-                        self.last_run_datetime,
-                        self.current_run_datetime,
-                    ),
-                ),
-            ).all()
+            queue_positions_to_remind = list_expiring_queue_positions(
+                self.sql_session,
+                self.last_run_datetime,
+                self.current_run_datetime,
+            )
 
             for queue_position in queue_positions_to_remind:
                 self._send_expiring_queue_position_mail(queue_position, day)
@@ -271,14 +234,11 @@ class DeadlineDaemon:
             Config["deadline_daemon.days_before_queue_position_expires"],
         )
 
-        overdue_queue_positions = self.sql_session.scalars(
-            select(BookcaseItemBorrowingQueue).where(
-                BookcaseItemBorrowingQueue.item_became_available_time
-                + timedelta(days=queue_position_expiry_days)
-                < self.current_run_datetime,
-                BookcaseItemBorrowingQueue.expired.is_(False),
-            ),
-        ).all()
+        overdue_queue_positions = list_overdue_queue_positions(
+            self.sql_session,
+            queue_position_expiry_days,
+            self.current_run_datetime,
+        )
 
         for queue_position in overdue_queue_positions:
             logging.info(
@@ -287,16 +247,10 @@ class DeadlineDaemon:
 
             queue_position.expired = True
 
-            next_queue_position = self.sql_session.scalars(
-                select(BookcaseItemBorrowingQueue)
-                .where(
-                    BookcaseItemBorrowingQueue.fk_bookcase_item_uid
-                    == queue_position.fk_bookcase_item_uid,
-                    BookcaseItemBorrowingQueue.item_became_available_time.is_(None),
-                )
-                .order_by(BookcaseItemBorrowingQueue.entered_queue_time)
-                .limit(1),
-            ).one_or_none()
+            next_queue_position = find_next_queue_position(
+                self.sql_session,
+                queue_position.fk_bookcase_item_uid,
+            )
 
             self._send_queue_position_expired_mail(queue_position)
 
