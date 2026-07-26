@@ -1,29 +1,41 @@
+# Various python cache and build files
 __pycache__/
 *.py[cod]
 *$py.class
 
-worblehat.sqlite
+# Build and test system outputs
+.coverage
+.coverage.*
+dist/
+htmlcov
+src/worblehat/_version.py
+test-report/
+worblehat.egg-info
 
-.env
+# Virtual environment files
 .venv
-env/
-venv/
 ENV/
 env.bak/
+env/
 venv.bak/
+venv/
 
+# Local environment files
 .env
 .env.development.local
 .env.test.local
 .env.production.local
 .env.local
 
-dist/
+# Ruff
+.ruff_cache
 
+# Nix stuff
 result
-
-config.toml
-
 *.qcow2
 
-test-report/
+# Development config
+config.toml
+
+# Development database
+worblehat.sqlite
