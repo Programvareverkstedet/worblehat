@@ -43,6 +43,12 @@
       python-dotenv
       requests
       sqlalchemy
+
+      pytest
+      pytest
+      pytest-cov
+      pytest-html
+      sqlparse
     ];
 
   in {

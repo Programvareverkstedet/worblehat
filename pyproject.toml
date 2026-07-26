@@ -25,6 +25,13 @@ dev = [
   "werkzeug",
   "poethepoet",
 ]
+test = [
+    "coverage-badge>=1.1.2",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "pytest-html>=4.2.0",
+    "sqlparse>=0.5.5",
+]
 
 [project.scripts]
 worblehat = "worblehat:main"
@@ -83,4 +90,16 @@ ignore = [
   # "E501", # line too long
   "S101", # assert detected
   # "S311", # non-cryptographic random generator
+]
+
+[tool.pytest.ini_options]
+addopts = [
+    # "--cov=dibbler.lib",
+    # "--cov=dibbler.models",
+    # "--cov=dibbler.queries",
+    "--cov-report=html",
+    "--cov-branch",
+
+    "--self-contained-html",
+    "--html=./test-report/index.html",
 ]

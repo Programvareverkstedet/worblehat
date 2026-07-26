@@ -25,3 +25,5 @@ result
 config.toml
 
 *.qcow2
+
+test-report/

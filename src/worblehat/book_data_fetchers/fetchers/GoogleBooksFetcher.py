@@ -19,17 +19,18 @@ class GoogleBooksFetcher(BookDataFetcher):
             jsonInput = requests.get(
                 "https://www.googleapis.com/books/v1/volumes",
                 params={"q": f"isbn:{isbn}"},
+                timeout=30,
             ).json()
             data = jsonInput.get("items")[0].get("volumeInfo")
 
             authors = set(data.get("authors") or [])
             title = data.get("title")
-            publishDate = data.get("publish_date")
-            numberOfPages = data.get("number_of_pages")
+            publishDate = data.get("publishedDate")
+            numberOfPages = data.get("pageCount")
             if numberOfPages:
                 numberOfPages = int(numberOfPages)
             subjects = set(data.get("categories") or [])
-            languages = data.get("languages")
+            language = data.get("language")
         except Exception:
             return None
 
@@ -38,7 +39,7 @@ class GoogleBooksFetcher(BookDataFetcher):
             title=title,
             source=cls.fetcher_id(),
             authors=authors,
-            language=languages,
+            language=language,
             publish_date=publishDate,
             num_pages=numberOfPages,
             subjects=subjects,
