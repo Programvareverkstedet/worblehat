@@ -32,6 +32,9 @@ test = [
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "pytest-html>=4.2.0",
+    # coverage-badge 1.1.2 imports pkg_resources, which setuptools removed in 82.0.0.
+    # see https://github.com/dbrgn/coverage-badge/pull/35
+    "setuptools<82",
     "sqlparse>=0.5.5",
 ]
 
