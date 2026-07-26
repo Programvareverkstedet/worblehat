@@ -1,6 +1,6 @@
 [project]
 name = "worblehat"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Worblehat is a simple library management system written specifically for Programvareverkstedet"
 authors = [
   { name = "Programvareverkstedet", email = "projects@pvv.ntnu.no" }
@@ -54,6 +54,9 @@ include = ["worblehat*"]
 
 [tool.setuptools.package-dir]
 "" = "src"
+
+[tool.setuptools_scm]
+version_file = "src/worblehat/_version.py"
 
 [tool.poe.tasks]
 clean = """

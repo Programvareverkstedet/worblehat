@@ -18,14 +18,10 @@ from .services import (
 
 
 def _print_version() -> None:
-    from importlib.metadata import PackageNotFoundError, version
+   from ._version import commit_id, version
 
-    try:
-        __version__ = version("worblehat")
-    except PackageNotFoundError:
-        __version__ = "unknown"
-
-    print(f"Worblehat version {__version__}")
+   print(f"Worblehat version {version}, commit {commit_id if commit_id else '<unknown>'}")
+   return
 
 
 def _connect_to_database(**engine_args) -> Session:
@@ -43,16 +39,17 @@ def _connect_to_database(**engine_args) -> Session:
 
 def main() -> None:
     args = arg_parser.parse_args()
+
+    if args.version:
+        _print_version()
+        exit(0)
+
     Config.load_configuration(vars(args))
 
     if Config["logging.debug"]:
         logging.basicConfig(encoding="utf-8", level=logging.DEBUG)
     else:
         logging.basicConfig(encoding="utf-8", level=logging.INFO)
-
-    if args.version:
-        _print_version()
-        exit(0)
 
     if args.print_config:
         print(f"Configuration:\n{pformat(vars(args))}")
