@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.elements import SQLColumnExpression
 
 from worblehat.models import (
     BookcaseItemBorrowing,
@@ -10,14 +11,19 @@ from worblehat.models import (
 )
 
 
-def _sql_subtract_date(sql_session: Session, x: datetime, y: timedelta):
-    if sql_session.bind.dialect.name == "sqlite":
+def _sql_subtract_date(
+    sql_session: Session,
+    x: SQLColumnExpression[datetime],
+    y: timedelta,
+) -> SQLColumnExpression[datetime]:
+    dialect_name = sql_session.get_bind().dialect.name
+    if dialect_name == "sqlite":
         # SQLite does not support timedelta in queries
         return func.datetime(x, f"-{y.days} days")
-    if sql_session.bind.dialect.name == "postgresql":
+    if dialect_name == "postgresql":
         return x - y
     raise NotImplementedError(
-        f"Unsupported dialect: {sql_session.bind.dialect.name}",
+        f"Unsupported dialect: {dialect_name}",
     )
 
 
