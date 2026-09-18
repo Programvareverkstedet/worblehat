@@ -1,6 +1,8 @@
 from typing import Self
 
-from sqlalchemy import Integer
+from flask import abort
+from sqlalchemy import Integer, select
+from sqlalchemy.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.orm import (
     Mapped,
     Session,
@@ -20,7 +22,7 @@ class UidMixin:
         This method defaults to using the flask_sqlalchemy session.
         It will not work outside of a request context, unless another session is provided.
         """
-        return sql_session.query(cls).where(cls.uid == uid).one_or_none()
+        return sql_session.execute(select(cls).where(cls.uid == uid)).scalar_one_or_none()
 
     @classmethod
     def get_by_uid_or_404(cls, uid: int, sql_session: Session = db.session) -> Self:
@@ -29,4 +31,7 @@ class UidMixin:
         This method defaults to using the flask_sqlalchemy session.
         It will not work outside of a request context, unless another session is provided.
         """
-        return sql_session.query(cls).where(cls.uid == uid).one_or_404()
+        try:
+            return sql_session.execute(select(cls).where(cls.uid == uid)).scalar_one()
+        except (NoResultFound, MultipleResultsFound):
+            abort(404)

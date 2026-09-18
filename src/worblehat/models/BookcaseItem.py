@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from sqlalchemy import (
     ForeignKey,
     SmallInteger,
     String,
     Text,
+    select,
 )
 from sqlalchemy.orm import (
     Mapped,
@@ -84,4 +85,4 @@ class BookcaseItem(Base, UidMixin):
         This method defaults to using the flask_sqlalchemy session.
         It will not work outside of a request context, unless another session is provided.
         """
-        return sql_session.query(cls).where(cls.isbn == isbn).one_or_none()
+        return sql_session.execute(select(cls).where(cls.isbn == isbn)).scalar_one_or_none()
