@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
 
 from worblehat.models import BookcaseItem, BorrowingLog, QueueEventType, QueueLog, QueuePosition
@@ -30,7 +30,14 @@ def get_queue_position(
 
 
 def is_in_borrowing_queue(sql_session: Session, username: str, item: BookcaseItem) -> bool:
-    return get_queue_position(sql_session, username, item) is not None
+    return sql_session.scalar(
+        select(
+            exists().where(
+                QueuePosition.username == username,
+                QueuePosition.fk_bookcase_item_uid == item.uid,
+            ),
+        ),
+    )
 
 
 def list_queue_positions_for_item(

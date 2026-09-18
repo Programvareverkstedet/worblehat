@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
 
 from worblehat.models import BookcaseItem, Borrowing, BorrowingEventType, BorrowingLog
@@ -43,7 +43,14 @@ def get_active_borrowing(
 
 
 def has_active_borrowing(sql_session: Session, username: str, item: BookcaseItem) -> bool:
-    return get_active_borrowing(sql_session, username, item) is not None
+    return sql_session.scalar(
+        select(
+            exists().where(
+                Borrowing.username == username,
+                Borrowing.fk_bookcase_item_uid == item.uid,
+            ),
+        ),
+    )
 
 
 def list_borrowings_for_isbn(sql_session: Session, isbn: str) -> list[Borrowing]:
