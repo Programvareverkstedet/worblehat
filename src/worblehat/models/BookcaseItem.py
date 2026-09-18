@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from .Category import Category
     from .Language import Language
     from .MediaType import MediaType
+    from .projections import Borrowing, QueuePosition
     from .QueueLog import QueueLog
 
 from worblehat.flaskapp.database import db
@@ -52,6 +53,9 @@ class BookcaseItem(Base, UidMixin):
 
     borrowing_log: Mapped[set[BorrowingLog]] = relationship(back_populates="item")
     queue_log: Mapped[set[QueueLog]] = relationship(back_populates="item")
+
+    borrowings: Mapped[set[Borrowing]] = relationship(back_populates="item")
+    queue_positions: Mapped[set[QueuePosition]] = relationship(back_populates="item")
 
     categories: Mapped[set[Category]] = relationship(
         secondary=Item_Category.__table__,

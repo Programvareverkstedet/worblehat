@@ -9,6 +9,7 @@ from .DeadlineDaemonLastRunDatetime import DeadlineDaemonLastRunDatetime
 from .enums import BorrowingEventType, QueueEventType
 from .Language import Language
 from .MediaType import MediaType
+from .projections import Borrowing, QueuePosition
 from .QueueLog import QueueLog
 
 __all__ = [
@@ -17,6 +18,7 @@ __all__ = [
     "Bookcase",
     "BookcaseItem",
     "BookcaseShelf",
+    "Borrowing",
     "BorrowingEventType",
     "BorrowingLog",
     "Category",
@@ -25,4 +27,5 @@ __all__ = [
     "MediaType",
     "QueueEventType",
     "QueueLog",
+    "QueuePosition",
 ]

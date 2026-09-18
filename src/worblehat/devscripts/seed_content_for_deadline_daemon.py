@@ -4,9 +4,13 @@ from sqlalchemy.orm import Session
 
 from worblehat.models import (
     BookcaseItem,
-    BookcaseItemBorrowing,
-    BookcaseItemBorrowingQueue,
+    Borrowing,
+    BorrowingEventType,
+    BorrowingLog,
     DeadlineDaemonLastRunDatetime,
+    QueueEventType,
+    QueueLog,
+    QueuePosition,
 )
 from worblehat.services.config import Config
 
@@ -14,8 +18,10 @@ from .seed_test_data import main as seed_test_data_main
 
 
 def clear_db(sql_session: Session) -> None:
-    sql_session.query(BookcaseItemBorrowingQueue).delete()
-    sql_session.query(BookcaseItemBorrowing).delete()
+    sql_session.query(QueueLog).delete()
+    sql_session.query(BorrowingLog).delete()
+    sql_session.query(QueuePosition).delete()
+    sql_session.query(Borrowing).delete()
     sql_session.query(DeadlineDaemonLastRunDatetime).delete()
     sql_session.commit()
 
@@ -46,81 +52,113 @@ def main(sql_session: Session) -> None:
     sql_session.add(last_run)
 
     # Create at least one item that is borrowed and not supposed to be returned yet
-    borrowing = BookcaseItemBorrowing(
-        item=books[0],
-        username="test_borrower_still_borrowing",
+    sql_session.add(
+        BorrowingLog(
+            "test_borrower_still_borrowing",
+            books[0],
+            BorrowingEventType.BORROWED,
+            due_time=datetime.now() - timedelta(days=6),
+            timestamp=last_run_datetime - timedelta(days=1),
+        ),
     )
-    borrowing.start_time = last_run_datetime - timedelta(days=1)
-    borrowing.end_time = datetime.now() - timedelta(days=6)
-    sql_session.add(borrowing)
 
     # Create at least one item that is borrowed and is supposed to be returned soon
-    borrowing = BookcaseItemBorrowing(
-        item=books[1],
-        username="test_borrower_return_soon",
+    sql_session.add(
+        BorrowingLog(
+            "test_borrower_return_soon",
+            books[1],
+            BorrowingEventType.BORROWED,
+            due_time=datetime.now() - timedelta(days=2),
+            timestamp=last_run_datetime - timedelta(days=1),
+        ),
     )
-    borrowing.start_time = last_run_datetime - timedelta(days=1)
-    borrowing.end_time = datetime.now() - timedelta(days=2)
-    sql_session.add(borrowing)
 
     # Create at least one item that is borrowed and is overdue
-    borrowing = BookcaseItemBorrowing(
-        item=books[2],
-        username="test_borrower_overdue",
+    sql_session.add(
+        BorrowingLog(
+            "test_borrower_overdue",
+            books[2],
+            BorrowingEventType.BORROWED,
+            due_time=datetime.now() + timedelta(days=1),
+            timestamp=datetime.now() - timedelta(days=1),
+        ),
     )
-    borrowing.start_time = datetime.now() - timedelta(days=1)
-    borrowing.end_time = datetime.now() + timedelta(days=1)
-    sql_session.add(borrowing)
 
     # Create at least one item that is in the queue and is not supposed to be borrowed yet
-    queue_item = BookcaseItemBorrowingQueue(
-        item=books[3],
-        username="test_queue_user_still_waiting",
+    sql_session.add(
+        QueueLog(
+            "test_queue_user_still_waiting",
+            books[3],
+            QueueEventType.JOINED,
+            timestamp=last_run_datetime - timedelta(days=1),
+        ),
     )
-    queue_item.entered_queue_time = last_run_datetime - timedelta(days=1)
-    borrowing = BookcaseItemBorrowing(
-        item=books[3],
-        username="test_borrower_return_soon",
+    sql_session.add(
+        BorrowingLog(
+            "test_borrower_return_soon",
+            books[3],
+            BorrowingEventType.BORROWED,
+            due_time=datetime.now() - timedelta(days=2),
+            timestamp=last_run_datetime - timedelta(days=1),
+        ),
     )
-    borrowing.start_time = last_run_datetime - timedelta(days=1)
-    borrowing.end_time = datetime.now() - timedelta(days=2)
-    sql_session.add(queue_item)
-    sql_session.add(borrowing)
 
     # Create at least three items that is in the queue and two items were just returned
     for i in range(3):
-        queue_item = BookcaseItemBorrowingQueue(
-            item=books[4 + i],
-            username=f"test_queue_user_{i}",
+        sql_session.add(
+            QueueLog(f"test_queue_user_{i}", books[4 + i], QueueEventType.JOINED),
         )
-        sql_session.add(queue_item)
 
     for i in range(3):
-        borrowing = BookcaseItemBorrowing(
-            item=books[4 + i],
-            username=f"test_borrower_returned_{i}",
+        username = f"test_borrower_returned_{i}"
+        item = books[4 + i]
+        sql_session.add(
+            BorrowingLog(
+                username,
+                item,
+                BorrowingEventType.BORROWED,
+                due_time=datetime.now() + timedelta(days=1),
+                timestamp=last_run_datetime - timedelta(days=2),
+            ),
         )
-        borrowing.start_time = last_run_datetime - timedelta(days=2)
-        borrowing.end_time = datetime.now() + timedelta(days=1)
 
         if i != 2:
-            borrowing.delivered = datetime.now() - timedelta(days=1)
-
-        sql_session.add(borrowing)
+            sql_session.add(
+                BorrowingLog(
+                    username,
+                    item,
+                    BorrowingEventType.RETURNED,
+                    timestamp=datetime.now() - timedelta(days=1),
+                ),
+            )
 
     # Create at least one item that has been in the queue for so long that the queue position should expire
-    queue_item = BookcaseItemBorrowingQueue(
-        item=books[7],
-        username="test_queue_user_expired",
+    sql_session.add(
+        QueueLog(
+            "test_queue_user_expired",
+            books[7],
+            QueueEventType.JOINED,
+            timestamp=datetime.now() - timedelta(days=15),
+        ),
     )
-    queue_item.entered_queue_time = datetime.now() - timedelta(days=15)
 
     # Create at least one item that has been in the queue for so long that the queue position should expire,
     # but the queue person has already been notified
-    queue_item = BookcaseItemBorrowingQueue(
-        item=books[8],
-        username="test_queue_user_expired_notified",
+    sql_session.add(
+        QueueLog(
+            "test_queue_user_expired_notified",
+            books[8],
+            QueueEventType.JOINED,
+            timestamp=datetime.now() - timedelta(days=15),
+        ),
     )
-    queue_item.entered_queue_time = datetime.now() - timedelta(days=15)
+    sql_session.add(
+        QueueLog(
+            "test_queue_user_expired_notified",
+            books[8],
+            QueueEventType.NOTIFIED,
+            timestamp=datetime.now() - timedelta(days=queue_expire_days + 1),
+        ),
+    )
 
     sql_session.commit()
