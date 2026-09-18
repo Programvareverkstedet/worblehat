@@ -85,7 +85,7 @@ def list_borrowing_log_for_item(
         sql_session.scalars(
             select(BorrowingLog)
             .where(BorrowingLog.fk_bookcase_item_uid == item.uid)
-            .order_by(BorrowingLog.uid),
+            .order_by(BorrowingLog.due_time),
         ).all(),
     )
 
@@ -95,7 +95,14 @@ def borrow_item(
     username: str,
     item: BookcaseItem,
     loan_days: int = DEFAULT_LOAN_DAYS,
+    _unsafe: bool = False,
 ) -> tuple[Borrowing, BorrowingLog]:
+    if not _unsafe:
+        if has_active_borrowing(sql_session, username, item):
+            raise ValueError(f"{username} already has an active borrowing of this item")
+        if len(list_active_borrowings_for_item(sql_session, item)) >= item.amount:
+            raise ValueError("No available copies of this item to borrow")
+
     due_time = datetime.now() + timedelta(days=loan_days)
     log_entry = BorrowingLog(username, item, BorrowingEventType.BORROWED, due_time=due_time)
     sql_session.add(log_entry)
@@ -108,7 +115,14 @@ def renew_borrowing(
     sql_session: Session,
     borrowing: Borrowing,
     loan_days: int = DEFAULT_LOAN_DAYS,
+    _unsafe: bool = False,
 ) -> Borrowing:
+    if (
+        not _unsafe
+        and get_active_borrowing(sql_session, borrowing.username, borrowing.item) is None
+    ):
+        raise ValueError(f"{borrowing.username} does not currently have this item borrowed")
+
     due_time = datetime.now() + timedelta(days=loan_days)
     sql_session.add(
         BorrowingLog(
@@ -123,7 +137,13 @@ def renew_borrowing(
     return borrowing
 
 
-def return_item(sql_session: Session, borrowing: Borrowing) -> None:
+def return_item(sql_session: Session, borrowing: Borrowing, _unsafe: bool = False) -> None:
+    if (
+        not _unsafe
+        and get_active_borrowing(sql_session, borrowing.username, borrowing.item) is None
+    ):
+        raise ValueError(f"{borrowing.username} does not currently have this item borrowed")
+
     sql_session.add(
         BorrowingLog(borrowing.username, borrowing.item, BorrowingEventType.RETURNED),
     )
