@@ -88,11 +88,13 @@ def borrow_item(
     username: str,
     item: BookcaseItem,
     loan_days: int = DEFAULT_LOAN_DAYS,
-) -> Borrowing:
+) -> tuple[Borrowing, BorrowingLog]:
     due_time = datetime.now() + timedelta(days=loan_days)
-    sql_session.add(BorrowingLog(username, item, BorrowingEventType.BORROWED, due_time=due_time))
+    log_entry = BorrowingLog(username, item, BorrowingEventType.BORROWED, due_time=due_time)
+    sql_session.add(log_entry)
     sql_session.flush()
-    return sql_session.get_one(Borrowing, (item.uid, username))
+    current = sql_session.get_one(Borrowing, (item.uid, username))
+    return current, log_entry
 
 
 def renew_borrowing(

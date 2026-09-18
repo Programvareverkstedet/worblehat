@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from textwrap import dedent
 
 from libdib.repl import (
@@ -13,19 +12,21 @@ from sqlalchemy.orm import Session
 from worblehat.models import (
     Bookcase,
     BookcaseItem,
-    BookcaseItemBorrowing,
-    BookcaseItemBorrowingQueue,
     Language,
     MediaType,
 )
 from worblehat.queries import (
+    borrow_item,
     find_bookcase_item_by_isbn,
     find_bookcase_item_by_name,
     has_active_borrowing,
     is_in_borrowing_queue,
+    join_borrowing_queue,
     list_active_borrowings_for_item,
     list_borrowings_for_isbn,
     list_pending_queue_items_for_item,
+    renew_borrowing,
+    return_item,
 )
 from worblehat.services.bookcase_item import (
     create_bookcase_item_from_isbn,
@@ -102,11 +103,11 @@ class BookcaseItemCli(NumberedCmd):
             print("Active borrowings:")
 
             for b in active_borrowings:
-                print(f"  {b.username} - Until {format_date(b.end_time)}")
+                print(f"  {b.username} - Until {format_date(b.due_time)}")
 
-            if len(self.bookcase_item.borrowing_queue) > 0:
+            if len(self.bookcase_item.queue_positions) > 0:
                 print("Borrowing queue:")
-                for i, b in enumerate(self.bookcase_item.borrowing_queue):
+                for i, b in enumerate(self.bookcase_item.queue_positions):
                     print(f"  {i + 1} - {b.username}")
 
             print()
@@ -126,21 +127,15 @@ class BookcaseItemCli(NumberedCmd):
                 print("You are already in the borrowing queue")
                 return
 
-            borrowing_queue_item = BookcaseItemBorrowingQueue(
-                username,
-                self.bookcase_item,
-            )
-            self.sql_session.add(borrowing_queue_item)
+            join_borrowing_queue(self.sql_session, username, self.bookcase_item)
             print(f"{username} entered the queue!")
             return
 
         username = self._prompt_username()
 
-        borrowing_item = BookcaseItemBorrowing(username, self.bookcase_item)
-        self.sql_session.add(borrowing_item)
-        self.sql_session.flush()
+        borrowing, _log_entry = borrow_item(self.sql_session, username, self.bookcase_item)
         print(
-            f"Successfully borrowed the item. Please deliver it back by {format_date(borrowing_item.end_time)}",
+            f"Successfully borrowed the item. Please deliver it back by {format_date(borrowing.due_time)}",
         )
 
     def do_deliver(self, _: str) -> None:
@@ -168,8 +163,7 @@ class BookcaseItemCli(NumberedCmd):
             break
 
         borrowing = borrowings[selection - 1]
-        borrowing.delivered = datetime.now()
-        self.sql_session.flush()
+        return_item(self.sql_session, borrowing)
         print(f"Successfully delivered the item for {borrowing.username}")
 
     def do_extend_borrowing(self, _: str) -> None:
@@ -196,20 +190,21 @@ class BookcaseItemCli(NumberedCmd):
         print("Who are you?")
         selector = NumberedItemSelector(
             items=list(borrowings),
-            stringify=lambda b: f"{b.username} - Until {format_date(b.end_time)}",
+            stringify=lambda b: f"{b.username} - Until {format_date(b.due_time)}",
         )
         selector.cmdloop()
         if selector.result is None:
             return
         borrowing = selector.result
 
-        borrowing.end_time = datetime.now() + timedelta(
-            days=int(Config["deadline_daemon.days_before_queue_position_expires"]),
+        borrowing = renew_borrowing(
+            self.sql_session,
+            borrowing,
+            loan_days=int(Config["deadline_daemon.days_before_queue_position_expires"]),
         )
-        self.sql_session.flush()
 
         print(
-            f"Successfully extended the borrowing for {borrowing.username} until {format_date(borrowing.end_time)}",
+            f"Successfully extended the borrowing for {borrowing.username} until {format_date(borrowing.due_time)}",
         )
 
     def do_done(self, _: str) -> bool:

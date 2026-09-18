@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from worblehat.models import BookcaseItem, QueueEventType, QueueLog, QueuePosition
+from worblehat.models import BookcaseItem, BorrowingLog, QueueEventType, QueueLog, QueuePosition
 
 
 def list_all_queue_items(sql_session: Session) -> list[QueuePosition]:
@@ -88,8 +88,19 @@ def leave_borrowing_queue(sql_session: Session, position: QueuePosition) -> None
     sql_session.expunge(position)
 
 
-def claim_borrowing_queue_position(sql_session: Session, position: QueuePosition) -> None:
-    sql_session.add(QueueLog(position.username, position.item, QueueEventType.CLAIMED))
+def claim_borrowing_queue_position(
+    sql_session: Session,
+    position: QueuePosition,
+    borrowing_log_entry: BorrowingLog,
+) -> None:
+    sql_session.add(
+        QueueLog(
+            position.username,
+            position.item,
+            QueueEventType.CLAIMED,
+            borrowing_log_entry=borrowing_log_entry,
+        ),
+    )
     sql_session.flush()
     sql_session.expunge(position)
 
