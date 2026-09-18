@@ -11,6 +11,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import (
     Mapped,
     Session,
+    WriteOnlyMapped,
     mapped_column,
     relationship,
 )
@@ -51,8 +52,8 @@ class BookcaseItem(Base, UidMixin):
     shelf: Mapped[BookcaseShelf] = relationship(back_populates="items")
     language: Mapped[Language] = relationship()
 
-    borrowing_log: Mapped[set[BorrowingLog]] = relationship(back_populates="item")
-    queue_log: Mapped[set[QueueLog]] = relationship(back_populates="item")
+    borrowing_log: WriteOnlyMapped[BorrowingLog] = relationship(back_populates="item")
+    queue_log: WriteOnlyMapped[QueueLog] = relationship(back_populates="item")
 
     borrowings: Mapped[set[Borrowing]] = relationship(back_populates="item")
     queue_positions: Mapped[set[QueuePosition]] = relationship(back_populates="item")
