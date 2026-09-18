@@ -26,12 +26,12 @@ from .xref_tables import (
 
 if TYPE_CHECKING:
     from .Author import Author
-    from .BookcaseItemBorrowing import BookcaseItemBorrowing
-    from .BookcaseItemBorrowingQueue import BookcaseItemBorrowingQueue
     from .BookcaseShelf import BookcaseShelf
+    from .BorrowingLog import BorrowingLog
     from .Category import Category
     from .Language import Language
     from .MediaType import MediaType
+    from .QueueLog import QueueLog
 
 from worblehat.flaskapp.database import db
 
@@ -49,10 +49,9 @@ class BookcaseItem(Base, UidMixin):
     media_type: Mapped[MediaType] = relationship(back_populates="items")
     shelf: Mapped[BookcaseShelf] = relationship(back_populates="items")
     language: Mapped[Language] = relationship()
-    borrowings: Mapped[set[BookcaseItemBorrowing]] = relationship(back_populates="item")
-    borrowing_queue: Mapped[set[BookcaseItemBorrowingQueue]] = relationship(
-        back_populates="item",
-    )
+
+    borrowing_log: Mapped[set[BorrowingLog]] = relationship(back_populates="item")
+    queue_log: Mapped[set[QueueLog]] = relationship(back_populates="item")
 
     categories: Mapped[set[Category]] = relationship(
         secondary=Item_Category.__table__,
