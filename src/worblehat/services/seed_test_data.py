@@ -10,12 +10,15 @@ from ..models import (
     Author,
     Bookcase,
     BookcaseItem,
-    BookcaseItemBorrowing,
-    BookcaseItemBorrowingQueue,
     BookcaseShelf,
+    BorrowingEventType,
+    BorrowingLog,
     Language,
     MediaType,
+    QueueEventType,
+    QueueLog,
 )
+from ..queries.borrowing import DEFAULT_LOAN_DAYS
 
 
 def seed_data(sql_session: Session = db.session) -> None:
@@ -273,21 +276,37 @@ def seed_data(sql_session: Session = db.session) -> None:
         borrowed_book_people_in_queue,
     ]
 
-    slabbedask_borrowing = BookcaseItemBorrowing(
-        username="slabbedask",
-        item=borrowed_book_more_available,
+    slabbedask_borrowing = BorrowingLog(
+        "slabbedask",
+        borrowed_book_more_available,
+        BorrowingEventType.BORROWED,
+        due_time=datetime.now() - timedelta(days=1),
     )
-    slabbedask_borrowing.end_time = datetime.now() - timedelta(days=1)
 
     borrowings = [
-        BookcaseItemBorrowing(username="user", item=borrowed_book_more_available),
-        BookcaseItemBorrowing(username="user", item=borrowed_book_no_more_available),
-        BookcaseItemBorrowing(username="user", item=borrowed_book_people_in_queue),
+        BorrowingLog(
+            "user",
+            borrowed_book_more_available,
+            BorrowingEventType.BORROWED,
+            due_time=datetime.now() + timedelta(days=DEFAULT_LOAN_DAYS),
+        ),
+        BorrowingLog(
+            "user",
+            borrowed_book_no_more_available,
+            BorrowingEventType.BORROWED,
+            due_time=datetime.now() + timedelta(days=DEFAULT_LOAN_DAYS),
+        ),
+        BorrowingLog(
+            "user",
+            borrowed_book_people_in_queue,
+            BorrowingEventType.BORROWED,
+            due_time=datetime.now() + timedelta(days=DEFAULT_LOAN_DAYS),
+        ),
         slabbedask_borrowing,
     ]
 
     queue = [
-        BookcaseItemBorrowingQueue(username="user", item=borrowed_book_people_in_queue),
+        QueueLog("user", borrowed_book_people_in_queue, QueueEventType.JOINED),
     ]
 
     with (Path(__file__).parent.parent.parent / "data" / "iso639_1.csv").open() as f:

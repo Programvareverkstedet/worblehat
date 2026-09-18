@@ -5,9 +5,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import SQLColumnExpression
 
 from worblehat.models import (
-    BookcaseItemBorrowing,
-    BookcaseItemBorrowingQueue,
+    Borrowing,
+    BorrowingEventType,
+    BorrowingLog,
     DeadlineDaemonLastRunDatetime,
+    QueuePosition,
 )
 
 
@@ -38,19 +40,18 @@ def list_close_deadline_borrowings(
     day: int,
     last_run_datetime: datetime,
     current_run_datetime: datetime,
-) -> list[BookcaseItemBorrowing]:
+) -> list[Borrowing]:
     return list(
         sql_session.scalars(
-            select(BookcaseItemBorrowing).where(
+            select(Borrowing).where(
                 _sql_subtract_date(
                     sql_session,
-                    BookcaseItemBorrowing.end_time,
+                    Borrowing.due_time,
                     timedelta(days=day),
                 ).between(
                     last_run_datetime,
                     current_run_datetime,
                 ),
-                BookcaseItemBorrowing.delivered.is_(None),
             ),
         ).all(),
     )
@@ -59,12 +60,11 @@ def list_close_deadline_borrowings(
 def list_undelivered_overdue_borrowings(
     sql_session: Session,
     current_run_datetime: datetime,
-) -> list[BookcaseItemBorrowing]:
+) -> list[Borrowing]:
     return list(
         sql_session.scalars(
-            select(BookcaseItemBorrowing).where(
-                BookcaseItemBorrowing.end_time < current_run_datetime,
-                BookcaseItemBorrowing.delivered.is_(None),
+            select(Borrowing).where(
+                Borrowing.due_time < current_run_datetime,
             ),
         ).all(),
     )
@@ -74,25 +74,25 @@ def list_newly_available_queue_items(
     sql_session: Session,
     last_run_datetime: datetime,
     current_run_datetime: datetime,
-) -> list[BookcaseItemBorrowingQueue]:
+) -> list[QueuePosition]:
+    items_returned_since_last_run = (
+        select(BorrowingLog.fk_bookcase_item_uid)
+        .where(
+            BorrowingLog.event_type == BorrowingEventType.RETURNED,
+            BorrowingLog.timestamp.between(last_run_datetime, current_run_datetime),
+        )
+        .distinct()
+    )
+
     return list(
         sql_session.scalars(
-            select(BookcaseItemBorrowingQueue)
-            .join(
-                BookcaseItemBorrowing,
-                BookcaseItemBorrowing.fk_bookcase_item_uid
-                == BookcaseItemBorrowingQueue.fk_bookcase_item_uid,
-            )
+            select(QueuePosition)
             .where(
-                BookcaseItemBorrowingQueue.expired.is_(False),
-                BookcaseItemBorrowing.delivered.is_not(None),
-                BookcaseItemBorrowing.delivered.between(
-                    last_run_datetime,
-                    current_run_datetime,
-                ),
+                QueuePosition.notified_available_time.is_(None),
+                QueuePosition.fk_bookcase_item_uid.in_(items_returned_since_last_run),
             )
-            .order_by(BookcaseItemBorrowingQueue.entered_queue_time)
-            .group_by(BookcaseItemBorrowingQueue.fk_bookcase_item_uid),
+            .order_by(QueuePosition.entered_queue_time)
+            .group_by(QueuePosition.fk_bookcase_item_uid),
         ).all(),
     )
 
@@ -101,17 +101,11 @@ def list_expiring_queue_positions(
     sql_session: Session,
     last_run_datetime: datetime,
     current_run_datetime: datetime,
-) -> list[BookcaseItemBorrowingQueue]:
+) -> list[QueuePosition]:
     return list(
         sql_session.scalars(
-            select(BookcaseItemBorrowingQueue)
-            .join(
-                BookcaseItemBorrowing,
-                BookcaseItemBorrowing.fk_bookcase_item_uid
-                == BookcaseItemBorrowingQueue.fk_bookcase_item_uid,
-            )
-            .where(
-                BookcaseItemBorrowingQueue.item_became_available_time.between(
+            select(QueuePosition).where(
+                QueuePosition.notified_available_time.between(
                     last_run_datetime,
                     current_run_datetime,
                 ),
@@ -124,13 +118,12 @@ def list_overdue_queue_positions(
     sql_session: Session,
     queue_position_expiry_days: int,
     current_run_datetime: datetime,
-) -> list[BookcaseItemBorrowingQueue]:
+) -> list[QueuePosition]:
     expiry_cutoff = current_run_datetime - timedelta(days=queue_position_expiry_days)
     return list(
         sql_session.scalars(
-            select(BookcaseItemBorrowingQueue).where(
-                BookcaseItemBorrowingQueue.item_became_available_time < expiry_cutoff,
-                BookcaseItemBorrowingQueue.expired.is_(False),
+            select(QueuePosition).where(
+                QueuePosition.notified_available_time < expiry_cutoff,
             ),
         ).all(),
     )
@@ -139,13 +132,13 @@ def list_overdue_queue_positions(
 def find_next_queue_position(
     sql_session: Session,
     item_uid: int,
-) -> BookcaseItemBorrowingQueue | None:
+) -> QueuePosition | None:
     return sql_session.scalars(
-        select(BookcaseItemBorrowingQueue)
+        select(QueuePosition)
         .where(
-            BookcaseItemBorrowingQueue.fk_bookcase_item_uid == item_uid,
-            BookcaseItemBorrowingQueue.item_became_available_time.is_(None),
+            QueuePosition.fk_bookcase_item_uid == item_uid,
+            QueuePosition.notified_available_time.is_(None),
         )
-        .order_by(BookcaseItemBorrowingQueue.entered_queue_time)
+        .order_by(QueuePosition.entered_queue_time)
         .limit(1),
     ).one_or_none()

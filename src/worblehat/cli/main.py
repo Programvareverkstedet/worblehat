@@ -83,7 +83,7 @@ class WorblehatCli(NumberedCmd):
             print("Borrowed items:")
             for item in borrowed_items:
                 print(
-                    f"- {item.username} - {item.item.name} - to be delivered by {item.end_time.strftime('%Y-%m-%d')}",
+                    f"- {item.username} - {item.item.name} - to be delivered by {item.due_time.strftime('%Y-%m-%d')}",
                 )
 
         print()
@@ -191,7 +191,7 @@ class WorblehatCli(NumberedCmd):
         for slubbert in slubberter:
             print("Slubberter:")
             print(
-                f"- {slubbert.username} - {slubbert.item.name} - {slubbert.end_time.strftime('%Y-%m-%d')}",
+                f"- {slubbert.username} - {slubbert.item.name} - {slubbert.due_time.strftime('%Y-%m-%d')}",
             )
 
     def do_advanced(self, _: str) -> None:

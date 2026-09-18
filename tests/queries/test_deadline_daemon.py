@@ -5,11 +5,15 @@ from sqlalchemy.orm import Session
 from worblehat.models import (
     Bookcase,
     BookcaseItem,
-    BookcaseItemBorrowing,
-    BookcaseItemBorrowingQueue,
     BookcaseShelf,
+    Borrowing,
+    BorrowingEventType,
+    BorrowingLog,
     DeadlineDaemonLastRunDatetime,
     MediaType,
+    QueueEventType,
+    QueueLog,
+    QueuePosition,
 )
 from worblehat.queries.deadline_daemon import (
     find_last_run,
@@ -42,6 +46,64 @@ def _make_bookcase_item(
     return item
 
 
+def _borrow(
+    sql_session: Session,
+    username: str,
+    item: BookcaseItem,
+    due_time: datetime | None = None,
+    timestamp: datetime | None = None,
+) -> Borrowing:
+    """Appends a BORROWED log entry and returns the resulting `Borrowing` projection."""
+    sql_session.add(
+        BorrowingLog(
+            username,
+            item,
+            BorrowingEventType.BORROWED,
+            due_time=due_time if due_time is not None else datetime.now() + timedelta(days=30),
+            timestamp=timestamp,
+        ),
+    )
+    sql_session.flush()
+    return sql_session.get_one(Borrowing, (item.uid, username))
+
+
+def _return(
+    sql_session: Session,
+    username: str,
+    item: BookcaseItem,
+    timestamp: datetime | None = None,
+) -> None:
+    sql_session.add(BorrowingLog(username, item, BorrowingEventType.RETURNED, timestamp=timestamp))
+    sql_session.flush()
+
+
+def _join_queue(
+    sql_session: Session,
+    username: str,
+    item: BookcaseItem,
+    entered_queue_time: datetime | None = None,
+) -> QueuePosition:
+    """Appends a JOINED log entry and returns the resulting `QueuePosition` projection."""
+    sql_session.add(QueueLog(username, item, QueueEventType.JOINED, timestamp=entered_queue_time))
+    sql_session.flush()
+    return sql_session.get_one(QueuePosition, (item.uid, username))
+
+
+def _notify_queue(
+    sql_session: Session,
+    username: str,
+    item: BookcaseItem,
+    timestamp: datetime | None = None,
+) -> None:
+    sql_session.add(QueueLog(username, item, QueueEventType.NOTIFIED, timestamp=timestamp))
+    sql_session.flush()
+
+
+def _expire_queue(sql_session: Session, username: str, item: BookcaseItem) -> None:
+    sql_session.add(QueueLog(username, item, QueueEventType.EXPIRED))
+    sql_session.flush()
+
+
 def test_find_last_run_returns_none_when_db_is_empty(sql_session: Session) -> None:
     assert find_last_run(sql_session) is None
 
@@ -60,14 +122,8 @@ def test_list_close_deadline_borrowings_matches_borrowings_ending_in_n_days(
     item = _make_bookcase_item(sql_session)
     now = datetime.now()
 
-    close = BookcaseItemBorrowing("alice", item)
-    close.end_time = now + timedelta(days=2)
-
-    far = BookcaseItemBorrowing("bob", item)
-    far.end_time = now + timedelta(days=20)
-
-    sql_session.add_all([close, far])
-    sql_session.flush()
+    close = _borrow(sql_session, "alice", item, due_time=now + timedelta(days=2))
+    _borrow(sql_session, "bob", item, due_time=now + timedelta(days=20))
 
     result = list_close_deadline_borrowings(
         sql_session,
@@ -83,12 +139,8 @@ def test_list_close_deadline_borrowings_excludes_delivered(sql_session: Session)
     item = _make_bookcase_item(sql_session)
     now = datetime.now()
 
-    delivered = BookcaseItemBorrowing("alice", item)
-    delivered.end_time = now + timedelta(days=2)
-    delivered.delivered = now
-
-    sql_session.add(delivered)
-    sql_session.flush()
+    _borrow(sql_session, "alice", item, due_time=now + timedelta(days=2))
+    _return(sql_session, "alice", item, timestamp=now)
 
     result = list_close_deadline_borrowings(
         sql_session,
@@ -106,18 +158,10 @@ def test_list_undelivered_overdue_borrowings_only_returns_undelivered_past_deadl
     item = _make_bookcase_item(sql_session)
     now = datetime.now()
 
-    overdue = BookcaseItemBorrowing("alice", item)
-    overdue.end_time = now - timedelta(days=1)
-
-    not_yet_due = BookcaseItemBorrowing("bob", item)
-    not_yet_due.end_time = now + timedelta(days=1)
-
-    overdue_but_delivered = BookcaseItemBorrowing("carol", item)
-    overdue_but_delivered.end_time = now - timedelta(days=1)
-    overdue_but_delivered.delivered = now
-
-    sql_session.add_all([overdue, not_yet_due, overdue_but_delivered])
-    sql_session.flush()
+    overdue = _borrow(sql_session, "alice", item, due_time=now - timedelta(days=1))
+    _borrow(sql_session, "bob", item, due_time=now + timedelta(days=1))
+    _borrow(sql_session, "carol", item, due_time=now - timedelta(days=1))
+    _return(sql_session, "carol", item, timestamp=now)
 
     result = list_undelivered_overdue_borrowings(sql_session, now)
 
@@ -128,12 +172,9 @@ def test_list_newly_available_queue_items_requires_delivery_in_window(sql_sessio
     item = _make_bookcase_item(sql_session)
     now = datetime.now()
 
-    borrowing = BookcaseItemBorrowing("alice", item)
-    borrowing.delivered = now
-    queue_item = BookcaseItemBorrowingQueue("bob", item)
-
-    sql_session.add_all([borrowing, queue_item])
-    sql_session.flush()
+    _borrow(sql_session, "alice", item)
+    _return(sql_session, "alice", item, timestamp=now)
+    queue_item = _join_queue(sql_session, "bob", item)
 
     result = list_newly_available_queue_items(
         sql_session,
@@ -150,12 +191,9 @@ def test_list_newly_available_queue_items_excludes_delivery_outside_window(
     item = _make_bookcase_item(sql_session)
     now = datetime.now()
 
-    borrowing = BookcaseItemBorrowing("alice", item)
-    borrowing.delivered = now - timedelta(days=10)
-    queue_item = BookcaseItemBorrowingQueue("bob", item)
-
-    sql_session.add_all([borrowing, queue_item])
-    sql_session.flush()
+    _borrow(sql_session, "alice", item)
+    _return(sql_session, "alice", item, timestamp=now - timedelta(days=10))
+    _join_queue(sql_session, "bob", item)
 
     result = list_newly_available_queue_items(
         sql_session,
@@ -172,11 +210,8 @@ def test_list_newly_available_queue_items_excludes_undelivered_borrowings(
     item = _make_bookcase_item(sql_session)
     now = datetime.now()
 
-    borrowing = BookcaseItemBorrowing("alice", item)
-    queue_item = BookcaseItemBorrowingQueue("bob", item)
-
-    sql_session.add_all([borrowing, queue_item])
-    sql_session.flush()
+    _borrow(sql_session, "alice", item)
+    _join_queue(sql_session, "bob", item)
 
     result = list_newly_available_queue_items(
         sql_session,
@@ -193,13 +228,10 @@ def test_list_newly_available_queue_items_excludes_expired_queue_entries(
     item = _make_bookcase_item(sql_session)
     now = datetime.now()
 
-    borrowing = BookcaseItemBorrowing("alice", item)
-    borrowing.delivered = now
-    queue_item = BookcaseItemBorrowingQueue("bob", item)
-    queue_item.expired = True
-
-    sql_session.add_all([borrowing, queue_item])
-    sql_session.flush()
+    _borrow(sql_session, "alice", item)
+    _return(sql_session, "alice", item, timestamp=now)
+    _join_queue(sql_session, "bob", item)
+    _expire_queue(sql_session, "bob", item)
 
     result = list_newly_available_queue_items(
         sql_session,
@@ -214,16 +246,11 @@ def test_list_expiring_queue_positions_matches_positions_in_window(sql_session: 
     item = _make_bookcase_item(sql_session)
     now = datetime.now()
 
-    sql_session.add(BookcaseItemBorrowing("someone", item))
+    in_window = _join_queue(sql_session, "alice", item)
+    _notify_queue(sql_session, "alice", item, timestamp=now)
 
-    in_window = BookcaseItemBorrowingQueue("alice", item)
-    in_window.item_became_available_time = now
-
-    out_of_window = BookcaseItemBorrowingQueue("bob", item)
-    out_of_window.item_became_available_time = now - timedelta(days=100)
-
-    sql_session.add_all([in_window, out_of_window])
-    sql_session.flush()
+    out_of_window = _join_queue(sql_session, "bob", item)
+    _notify_queue(sql_session, "bob", item, timestamp=now - timedelta(days=100))
 
     result = list_expiring_queue_positions(
         sql_session,
@@ -234,40 +261,17 @@ def test_list_expiring_queue_positions_matches_positions_in_window(sql_session: 
     assert result == [in_window]
 
 
-def test_list_expiring_queue_positions_ignores_items_without_a_borrowing(
-    sql_session: Session,
-) -> None:
-    item = _make_bookcase_item(sql_session)
-    now = datetime.now()
-
-    queue_item = BookcaseItemBorrowingQueue("alice", item)
-    queue_item.item_became_available_time = now
-    sql_session.add(queue_item)
-    sql_session.flush()
-
-    result = list_expiring_queue_positions(
-        sql_session,
-        last_run_datetime=now - timedelta(days=1),
-        current_run_datetime=now + timedelta(days=1),
-    )
-
-    assert result == []
-
-
 def test_list_overdue_queue_positions_matches_positions_older_than_expiry(
     sql_session: Session,
 ) -> None:
     item = _make_bookcase_item(sql_session)
     now = datetime.now()
 
-    overdue = BookcaseItemBorrowingQueue("alice", item)
-    overdue.item_became_available_time = now - timedelta(days=5)
+    overdue = _join_queue(sql_session, "alice", item)
+    _notify_queue(sql_session, "alice", item, timestamp=now - timedelta(days=5))
 
-    not_overdue = BookcaseItemBorrowingQueue("bob", item)
-    not_overdue.item_became_available_time = now
-
-    sql_session.add_all([overdue, not_overdue])
-    sql_session.flush()
+    _join_queue(sql_session, "bob", item)
+    _notify_queue(sql_session, "bob", item, timestamp=now)
 
     result = list_overdue_queue_positions(
         sql_session,
@@ -282,12 +286,9 @@ def test_list_overdue_queue_positions_excludes_already_expired(sql_session: Sess
     item = _make_bookcase_item(sql_session)
     now = datetime.now()
 
-    already_expired = BookcaseItemBorrowingQueue("alice", item)
-    already_expired.item_became_available_time = now - timedelta(days=5)
-    already_expired.expired = True
-
-    sql_session.add(already_expired)
-    sql_session.flush()
+    _join_queue(sql_session, "alice", item)
+    _notify_queue(sql_session, "alice", item, timestamp=now - timedelta(days=5))
+    _expire_queue(sql_session, "alice", item)
 
     result = list_overdue_queue_positions(
         sql_session,
@@ -302,13 +303,8 @@ def test_find_next_queue_position_returns_earliest_pending_entry(sql_session: Se
     item = _make_bookcase_item(sql_session)
     now = datetime.now()
 
-    later = BookcaseItemBorrowingQueue("alice", item)
-    later.entered_queue_time = now + timedelta(hours=1)
-    sooner = BookcaseItemBorrowingQueue("bob", item)
-    sooner.entered_queue_time = now
-
-    sql_session.add_all([later, sooner])
-    sql_session.flush()
+    _join_queue(sql_session, "alice", item, entered_queue_time=now + timedelta(hours=1))
+    sooner = _join_queue(sql_session, "bob", item, entered_queue_time=now)
 
     result = find_next_queue_position(sql_session, item.uid)
 
@@ -321,15 +317,10 @@ def test_find_next_queue_position_skips_entries_that_already_became_available(
     item = _make_bookcase_item(sql_session)
     now = datetime.now()
 
-    already_available = BookcaseItemBorrowingQueue("alice", item)
-    already_available.entered_queue_time = now
-    already_available.item_became_available_time = now
+    _join_queue(sql_session, "alice", item, entered_queue_time=now)
+    _notify_queue(sql_session, "alice", item, timestamp=now)
 
-    pending = BookcaseItemBorrowingQueue("bob", item)
-    pending.entered_queue_time = now + timedelta(hours=1)
-
-    sql_session.add_all([already_available, pending])
-    sql_session.flush()
+    pending = _join_queue(sql_session, "bob", item, entered_queue_time=now + timedelta(hours=1))
 
     result = find_next_queue_position(sql_session, item.uid)
 

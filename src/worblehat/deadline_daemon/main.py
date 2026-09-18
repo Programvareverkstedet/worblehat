@@ -5,18 +5,21 @@ from textwrap import dedent
 from sqlalchemy.orm import Session
 
 from worblehat.models import (
-    BookcaseItemBorrowing,
-    BookcaseItemBorrowingQueue,
+    Borrowing,
     DeadlineDaemonLastRunDatetime,
+    QueuePosition,
 )
 from worblehat.queries import (
+    expire_borrowing_queue_position,
     find_last_run,
     find_next_queue_position,
     list_close_deadline_borrowings,
     list_expiring_queue_positions,
     list_newly_available_queue_items,
     list_overdue_queue_positions,
+    list_queue_positions_for_item,
     list_undelivered_overdue_borrowings,
+    notify_borrowing_queue_position,
 )
 from worblehat.services.config import Config
 from worblehat.services.email import send_email
@@ -62,7 +65,7 @@ class DeadlineDaemon:
     # EMAIL TEMPLATES #
     ###################
 
-    def _send_close_deadline_mail(self, borrowing: BookcaseItemBorrowing) -> None:
+    def _send_close_deadline_mail(self, borrowing: Borrowing) -> None:
         logging.info(
             f"Sending close deadline mail to {borrowing.username}@pvv.ntnu.no.",
         )
@@ -75,14 +78,14 @@ class DeadlineDaemon:
 
                 {borrowing.item.name}
 
-                Please return the item by {borrowing.end_time.strftime("%a %b %d, %Y")}
+                Please return the item by {borrowing.due_time.strftime("%a %b %d, %Y")}
                 """,
             ).strip(),
         )
 
-    def _send_overdue_mail(self, borrowing: BookcaseItemBorrowing) -> None:
+    def _send_overdue_mail(self, borrowing: Borrowing) -> None:
         logging.info(
-            f"Sending overdue mail to {borrowing.username}@pvv.ntnu.no for {borrowing.item.isbn} - {borrowing.end_time.strftime('%a %b %d, %Y')}",
+            f"Sending overdue mail to {borrowing.username}@pvv.ntnu.no for {borrowing.item.isbn} - {borrowing.due_time.strftime('%a %b %d, %Y')}",
         )
         send_email(
             f"{borrowing.username}@pvv.ntnu.no",
@@ -98,7 +101,7 @@ class DeadlineDaemon:
             ).strip(),
         )
 
-    def _send_newly_available_mail(self, queue_item: BookcaseItemBorrowingQueue) -> None:
+    def _send_newly_available_mail(self, queue_item: QueuePosition) -> None:
         logging.info(f"Sending newly available mail to {queue_item.username}")
 
         days_before_queue_expires = Config["deadline_daemon.days_before_queue_position_expires"]
@@ -120,7 +123,7 @@ class DeadlineDaemon:
 
     def _send_expiring_queue_position_mail(
         self,
-        queue_position: BookcaseItemBorrowingQueue,
+        queue_position: QueuePosition,
         day: int,
     ) -> None:
         logging.info(
@@ -135,14 +138,15 @@ class DeadlineDaemon:
 
                 {queue_position.item.name}
 
-                Please borrow the item by {(queue_position.item_became_available_time + timedelta(days=day)).strftime("%a %b %d, %Y")}
+                Please borrow the item by {(queue_position.notified_available_time + timedelta(days=day)).strftime("%a %b %d, %Y")}
                 """,
             ).strip(),
         )
 
     def _send_queue_position_expired_mail(
         self,
-        queue_position: BookcaseItemBorrowingQueue,
+        queue_position: QueuePosition,
+        remaining_queue_length: int,
     ) -> None:
         send_email(
             f"{queue_position.username}@pvv.ntnu.no",
@@ -155,7 +159,7 @@ class DeadlineDaemon:
 
                 You can queue for the item again at any time, but you will be placed at the back of the queue.
 
-                There are currently {len(queue_position.item.borrowing_queue)} users in the queue.
+                There are currently {remaining_queue_length} users in the queue.
                 """,
             ).strip(),
         )
@@ -204,7 +208,11 @@ class DeadlineDaemon:
             logging.info(
                 f"Adding user {queue_item.username} to queue for {queue_item.item.name}",
             )
-            queue_item.item_became_available_time = self.current_run_datetime
+            notify_borrowing_queue_position(
+                self.sql_session,
+                queue_item,
+                notified_at=self.current_run_datetime,
+            )
             self.sql_session.commit()
 
             self._send_newly_available_mail(queue_item)
@@ -245,17 +253,25 @@ class DeadlineDaemon:
                 f"Expiring queue position for {queue_position.username} for item {queue_position.item.name}",
             )
 
-            queue_position.expired = True
+            item = queue_position.item
+            fk_bookcase_item_uid = queue_position.fk_bookcase_item_uid
+
+            expire_borrowing_queue_position(self.sql_session, queue_position)
 
             next_queue_position = find_next_queue_position(
                 self.sql_session,
-                queue_position.fk_bookcase_item_uid,
+                fk_bookcase_item_uid,
             )
 
-            self._send_queue_position_expired_mail(queue_position)
+            remaining_queue_length = len(list_queue_positions_for_item(self.sql_session, item))
+            self._send_queue_position_expired_mail(queue_position, remaining_queue_length)
 
             if next_queue_position is not None:
-                next_queue_position.item_became_available_time = self.current_run_datetime
+                notify_borrowing_queue_position(
+                    self.sql_session,
+                    next_queue_position,
+                    notified_at=self.current_run_datetime,
+                )
 
                 logging.info(
                     f"Next user in queue for item {next_queue_position.item.name} is {next_queue_position.username}",
