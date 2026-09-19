@@ -63,9 +63,9 @@ clean = """
 """
 
 # Migration related
-genmigration = "alembic revision --autogenerate -m"
-migrate = "alembic upgrade head"
-downmigrate = "alembic downgrade -1"
+genmigration = "alembic -c src/worblehat/models/migrations/alembic.ini revision --autogenerate -m"
+migrate = "alembic -c src/worblehat/models/migrations/alembic.ini upgrade head"
+downmigrate = "alembic -c src/worblehat/models/migrations/alembic.ini downgrade -1"
 # Be careful with cleanmigrations. If you run migrate a database and then
 # delete the migration file with this, there will be no easy way of downgrading
 cleanmigrations = "git clean -f src/worblehat/models/migrations/versions"

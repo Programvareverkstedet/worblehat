@@ -29,7 +29,7 @@ Worblehatt har vært påbegynnt flere ganger opp gjennom historien uten å komme
 This project uses `uv` as its buildtool as of February 2025.
 
 ```console
-$ uv run alembic -x config=./config-template.toml upgrade head
+$ uv run alembic -c src/worblehat/models/migrations/alembic.ini -x config=./config-template.toml upgrade head
 $ uv run worblehat -c config-template.toml devscripts seed-test-data
 $ uv run worblehat --help
 $ uv run worblehat -c config-template.toml cli
