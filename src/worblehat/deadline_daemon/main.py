@@ -23,6 +23,7 @@ from worblehat.queries import (
 )
 from worblehat.services.config import Config
 from worblehat.services.email import send_email
+from worblehat.services.sd_notify import notify, notify_status
 
 
 class DeadlineDaemon:
@@ -44,13 +45,17 @@ class DeadlineDaemon:
         self.current_run_datetime = datetime.now()
 
     def run(self) -> None:
-        logging.info("Deadline daemon started")
+        notify("READY=1")
         if not Config["deadline_daemon.enabled"]:
-            logging.warn("Deadline daemon disabled, exiting")
+            notify_status("Deadline daemon disabled, exiting")
+            logging.warning("Deadline daemon disabled, exiting")
             return
 
+        notify_status("Deadline daemon started")
+        logging.info("Deadline daemon started")
+
         if Config["deadline_daemon.dryrun"]:
-            logging.warn("Running in dryrun mode")
+            logging.warning("Running in dryrun mode")
 
         self.send_close_deadline_reminder_mails()
         self.send_overdue_mails()
@@ -58,8 +63,13 @@ class DeadlineDaemon:
         self.send_expiring_queue_position_mails()
         self.auto_expire_queue_positions()
 
+        notify_status("Recording last run time")
         self.last_run.time = self.current_run_datetime
         self.sql_session.commit()
+
+        notify_status("Deadline daemon finished")
+        logging.info("Deadline daemon finished")
+        notify("STOPPING=1")
 
     ###################
     # EMAIL TEMPLATES #
@@ -169,6 +179,7 @@ class DeadlineDaemon:
     ##################
 
     def send_close_deadline_reminder_mails(self) -> None:
+        notify_status("Sending mails for items with a closing deadline")
         logging.info("Sending mails for items with a closing deadline")
 
         # TODO: This should be int-parsed and validated before the daemon started
@@ -185,6 +196,7 @@ class DeadlineDaemon:
                 self._send_close_deadline_mail(borrowing)
 
     def send_overdue_mails(self) -> None:
+        notify_status("Sending mails for overdue items")
         logging.info("Sending mails for overdue items")
 
         to_remind = list_undelivered_overdue_borrowings(
@@ -196,6 +208,7 @@ class DeadlineDaemon:
             self._send_overdue_mail(borrowing)
 
     def send_newly_available_mails(self) -> None:
+        notify_status("Sending mails about newly available items")
         logging.info("Sending mails about newly available items")
 
         newly_available = list_newly_available_queue_items(
@@ -218,6 +231,7 @@ class DeadlineDaemon:
             self._send_newly_available_mail(queue_item)
 
     def send_expiring_queue_position_mails(self) -> None:
+        notify_status("Sending mails about queue positions which are expiring soon")
         logging.info("Sending mails about queue positions which are expiring soon")
         logging.warning("Not implemented")
 
@@ -236,6 +250,7 @@ class DeadlineDaemon:
                 self._send_expiring_queue_position_mail(queue_position, day)
 
     def auto_expire_queue_positions(self) -> None:
+        notify_status("Expiring queue positions which are too old")
         logging.info("Expiring queue positions which are too old")
 
         queue_position_expiry_days = int(

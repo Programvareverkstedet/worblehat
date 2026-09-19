@@ -230,6 +230,7 @@ in {
         after = [ "network.target" ];
         serviceConfig = {
           Type = "oneshot";
+          NotifyAccess = "main";
           CPUSchedulingPolicy = "idle";
           IOSchedulingClass = "idle";
 
