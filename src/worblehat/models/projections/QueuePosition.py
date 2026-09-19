@@ -26,7 +26,7 @@ class QueuePosition(Projection):
     """
 
     fk_bookcase_item_uid: Mapped[int] = mapped_column(
-        ForeignKey("BookcaseItem.uid"),
+        ForeignKey("bookcase_item.uid"),
         primary_key=True,
     )
     username: Mapped[str] = mapped_column(String, primary_key=True, index=True)
@@ -58,26 +58,26 @@ class QueuePosition(Projection):
         triggers=(
             Trigger(
                 name="trg_queuelog_joined",
-                table="QueueLog",
+                table="queue_log",
                 create="""
                     CREATE TRIGGER trg_queuelog_joined
-                    AFTER INSERT ON "QueueLog"
+                    AFTER INSERT ON "queue_log"
                     WHEN NEW.event_type = 'joined'
                     BEGIN
-                        INSERT INTO "QueuePosition" (fk_bookcase_item_uid, username, entered_queue_time)
+                        INSERT INTO "queue_position" (fk_bookcase_item_uid, username, entered_queue_time)
                         VALUES (NEW.fk_bookcase_item_uid, NEW.username, NEW.timestamp);
                     END
                 """,
             ),
             Trigger(
                 name="trg_queuelog_notified",
-                table="QueueLog",
+                table="queue_log",
                 create="""
                     CREATE TRIGGER trg_queuelog_notified
-                    AFTER INSERT ON "QueueLog"
+                    AFTER INSERT ON "queue_log"
                     WHEN NEW.event_type = 'notified'
                     BEGIN
-                        UPDATE "QueuePosition"
+                        UPDATE "queue_position"
                         SET notified_available_time = NEW.timestamp
                         WHERE fk_bookcase_item_uid = NEW.fk_bookcase_item_uid
                           AND username = NEW.username;
@@ -86,13 +86,13 @@ class QueuePosition(Projection):
             ),
             Trigger(
                 name="trg_queuelog_left_expired_claimed",
-                table="QueueLog",
+                table="queue_log",
                 create="""
                     CREATE TRIGGER trg_queuelog_left_expired_claimed
-                    AFTER INSERT ON "QueueLog"
+                    AFTER INSERT ON "queue_log"
                     WHEN NEW.event_type IN ('left', 'expired', 'claimed')
                     BEGIN
-                        DELETE FROM "QueuePosition"
+                        DELETE FROM "queue_position"
                         WHERE fk_bookcase_item_uid = NEW.fk_bookcase_item_uid
                           AND username = NEW.username;
                     END
@@ -108,15 +108,15 @@ class QueuePosition(Projection):
                     CREATE FUNCTION fn_sync_queueposition_projection() RETURNS TRIGGER AS $$
                     BEGIN
                         IF NEW.event_type = 'joined' THEN
-                            INSERT INTO "QueuePosition" (fk_bookcase_item_uid, username, entered_queue_time)
+                            INSERT INTO "queue_position" (fk_bookcase_item_uid, username, entered_queue_time)
                             VALUES (NEW.fk_bookcase_item_uid, NEW.username, NEW.timestamp);
                         ELSIF NEW.event_type = 'notified' THEN
-                            UPDATE "QueuePosition"
+                            UPDATE "queue_position"
                             SET notified_available_time = NEW.timestamp
                             WHERE fk_bookcase_item_uid = NEW.fk_bookcase_item_uid
                               AND username = NEW.username;
                         ELSIF NEW.event_type IN ('left', 'expired', 'claimed') THEN
-                            DELETE FROM "QueuePosition"
+                            DELETE FROM "queue_position"
                             WHERE fk_bookcase_item_uid = NEW.fk_bookcase_item_uid
                               AND username = NEW.username;
                         END IF;
@@ -129,10 +129,10 @@ class QueuePosition(Projection):
         triggers=(
             Trigger(
                 name="trg_queuelog_sync_queueposition",
-                table="QueueLog",
+                table="queue_log",
                 create="""
                     CREATE TRIGGER trg_queuelog_sync_queueposition
-                    AFTER INSERT ON "QueueLog"
+                    AFTER INSERT ON "queue_log"
                     FOR EACH ROW
                     EXECUTE FUNCTION fn_sync_queueposition_projection()
                 """,

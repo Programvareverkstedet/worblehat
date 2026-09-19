@@ -24,7 +24,7 @@ class Borrowing(Projection):
     """All active borrowings, excluding those that have been returned."""
 
     fk_bookcase_item_uid: Mapped[int] = mapped_column(
-        ForeignKey("BookcaseItem.uid"),
+        ForeignKey("bookcase_item.uid"),
         primary_key=True,
     )
     username: Mapped[str] = mapped_column(String, primary_key=True, index=True)
@@ -42,26 +42,26 @@ class Borrowing(Projection):
         triggers=(
             Trigger(
                 name="trg_borrowinglog_borrowed",
-                table="BorrowingLog",
+                table="borrowing_log",
                 create="""
                     CREATE TRIGGER trg_borrowinglog_borrowed
-                    AFTER INSERT ON "BorrowingLog"
+                    AFTER INSERT ON "borrowing_log"
                     WHEN NEW.event_type = 'borrowed'
                     BEGIN
-                        INSERT INTO "Borrowing" (fk_bookcase_item_uid, username, due_time)
+                        INSERT INTO "borrowing" (fk_bookcase_item_uid, username, due_time)
                         VALUES (NEW.fk_bookcase_item_uid, NEW.username, NEW.due_time);
                     END
                 """,
             ),
             Trigger(
                 name="trg_borrowinglog_renewed",
-                table="BorrowingLog",
+                table="borrowing_log",
                 create="""
                     CREATE TRIGGER trg_borrowinglog_renewed
-                    AFTER INSERT ON "BorrowingLog"
+                    AFTER INSERT ON "borrowing_log"
                     WHEN NEW.event_type = 'renewed'
                     BEGIN
-                        UPDATE "Borrowing"
+                        UPDATE "borrowing"
                         SET due_time = NEW.due_time
                         WHERE fk_bookcase_item_uid = NEW.fk_bookcase_item_uid
                           AND username = NEW.username;
@@ -70,13 +70,13 @@ class Borrowing(Projection):
             ),
             Trigger(
                 name="trg_borrowinglog_returned",
-                table="BorrowingLog",
+                table="borrowing_log",
                 create="""
                     CREATE TRIGGER trg_borrowinglog_returned
-                    AFTER INSERT ON "BorrowingLog"
+                    AFTER INSERT ON "borrowing_log"
                     WHEN NEW.event_type = 'returned'
                     BEGIN
-                        DELETE FROM "Borrowing"
+                        DELETE FROM "borrowing"
                         WHERE fk_bookcase_item_uid = NEW.fk_bookcase_item_uid
                           AND username = NEW.username;
                     END
@@ -92,15 +92,15 @@ class Borrowing(Projection):
                     CREATE FUNCTION fn_sync_borrowing_projection() RETURNS TRIGGER AS $$
                     BEGIN
                         IF NEW.event_type = 'borrowed' THEN
-                            INSERT INTO "Borrowing" (fk_bookcase_item_uid, username, due_time)
+                            INSERT INTO "borrowing" (fk_bookcase_item_uid, username, due_time)
                             VALUES (NEW.fk_bookcase_item_uid, NEW.username, NEW.due_time);
                         ELSIF NEW.event_type = 'renewed' THEN
-                            UPDATE "Borrowing"
+                            UPDATE "borrowing"
                             SET due_time = NEW.due_time
                             WHERE fk_bookcase_item_uid = NEW.fk_bookcase_item_uid
                               AND username = NEW.username;
                         ELSIF NEW.event_type = 'returned' THEN
-                            DELETE FROM "Borrowing"
+                            DELETE FROM "borrowing"
                             WHERE fk_bookcase_item_uid = NEW.fk_bookcase_item_uid
                               AND username = NEW.username;
                         END IF;
@@ -113,10 +113,10 @@ class Borrowing(Projection):
         triggers=(
             Trigger(
                 name="trg_borrowinglog_sync_borrowing",
-                table="BorrowingLog",
+                table="borrowing_log",
                 create="""
                     CREATE TRIGGER trg_borrowinglog_sync_borrowing
-                    AFTER INSERT ON "BorrowingLog"
+                    AFTER INSERT ON "borrowing_log"
                     FOR EACH ROW
                     EXECUTE FUNCTION fn_sync_borrowing_projection()
                 """,

@@ -34,7 +34,7 @@ class QueueLog(Base, UidMixin):
     """
 
     fk_bookcase_item_uid: Mapped[int] = mapped_column(
-        ForeignKey("BookcaseItem.uid"),
+        ForeignKey("bookcase_item.uid"),
         index=True,
     )
     username: Mapped[str] = mapped_column(String, index=True)
@@ -44,7 +44,7 @@ class QueueLog(Base, UidMixin):
     # Only set on CLAIMED, pointing at the corresponding BORROWED entry in
     # the BorrowingLog.
     fk_borrowing_log_uid: Mapped[int | None] = mapped_column(
-        ForeignKey("BorrowingLog.uid"),
+        ForeignKey("borrowing_log.uid"),
         default=None,
     )
 

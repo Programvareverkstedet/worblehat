@@ -12,10 +12,10 @@ from ..mixins.XrefMixin import XrefMixin
 
 class Item_Category(Base, XrefMixin):
     fk_item_uid: Mapped[int] = mapped_column(
-        ForeignKey("BookcaseItem.uid"),
+        ForeignKey("bookcase_item.uid"),
         primary_key=True,
     )
     fk_category_uid: Mapped[int] = mapped_column(
-        ForeignKey("Category.uid"),
+        ForeignKey("category.uid"),
         primary_key=True,
     )

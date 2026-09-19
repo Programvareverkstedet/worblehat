@@ -45,9 +45,9 @@ class BookcaseItem(Base, UidMixin):
     owner: Mapped[str] = mapped_column(String, default="PVV")
     amount: Mapped[int] = mapped_column(SmallInteger, default=1)
 
-    fk_media_type_uid: Mapped[int] = mapped_column(ForeignKey("MediaType.uid"))
-    fk_bookcase_shelf_uid: Mapped[int] = mapped_column(ForeignKey("BookcaseShelf.uid"))
-    fk_language_uid: Mapped[int | None] = mapped_column(ForeignKey("Language.uid"))
+    fk_media_type_uid: Mapped[int] = mapped_column(ForeignKey("media_type.uid"))
+    fk_bookcase_shelf_uid: Mapped[int] = mapped_column(ForeignKey("bookcase_shelf.uid"))
+    fk_language_uid: Mapped[int | None] = mapped_column(ForeignKey("language.uid"))
 
     media_type: Mapped[MediaType] = relationship(back_populates="items")
     shelf: Mapped[BookcaseShelf] = relationship(back_populates="items")

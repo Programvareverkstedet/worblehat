@@ -33,7 +33,7 @@ class BorrowingLog(Base, UidMixin):
     """
 
     fk_bookcase_item_uid: Mapped[int] = mapped_column(
-        ForeignKey("BookcaseItem.uid"),
+        ForeignKey("bookcase_item.uid"),
         index=True,
     )
     username: Mapped[str] = mapped_column(String, index=True)
