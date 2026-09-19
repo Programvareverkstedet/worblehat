@@ -1,4 +1,10 @@
+import contextlib
+import logging
+import sys
+import traceback
+from pathlib import Path
 from textwrap import dedent
+from time import ctime, time
 
 from libdib.repl import (
     InteractiveItemSelector,
@@ -58,6 +64,39 @@ class WorblehatCli(NumberedCmd):
             except KeyboardInterrupt:
                 print("\n\n-----------------\n")
                 self.do_exit("Exit")
+            except Exception:
+                self._write_crashdump()
+                print("Restarting main menu.\n")
+                with contextlib.suppress(Exception):
+                    self.sql_session.rollback()
+
+    def _write_crashdump(self) -> None:
+        try:
+            from .._version import commit_id, version
+        except ImportError:
+            commit_id = None
+            version = None
+
+        print("Something went wrong.")
+        print(f"{sys.exc_info()[0]}: {sys.exc_info()[1]}")
+
+        crashdump_dir = Path(Config["general.crashdump_dir"])
+        crashdump_dir.mkdir(parents=True, exist_ok=True)
+        crashdump_path = crashdump_dir / f"crashdump_{int(time())}.log"
+
+        with crashdump_path.open("w") as f:
+            f.write(f"Worblehat crashdump @ {ctime()}\n")
+            if version is not None:
+                f.write(f"Worblehat version {version}, commit {commit_id or '<unknown>'}\n")
+            f.write("\n")
+            traceback.print_exc(file=f)
+
+        logging.error(
+            "Unhandled exception in CLI loop: %s: %s (see %s for full traceback)",
+            sys.exc_info()[0].__name__,
+            sys.exc_info()[1],
+            crashdump_path,
+        )
 
     def do_show_bookcase(self, arg: str) -> None:
         bookcase_selector = InteractiveItemSelector(

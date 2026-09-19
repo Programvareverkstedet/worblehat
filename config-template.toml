@@ -41,3 +41,4 @@ warn_days_before_expiring_queue_position_deadline = [ 3, 1 ]
 
 [general]
 quit_allowed = true
+crashdump_dir = '/var/lib/worblehat/crashdumps'
