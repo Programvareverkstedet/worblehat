@@ -1,4 +1,4 @@
-![worblehat](worblehat.png)
+![worblehat](assets/worblehat.png)
 
 # 👉👁️👄👁️👈
 
