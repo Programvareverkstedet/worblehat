@@ -43,7 +43,7 @@ jobs:
           uv run -- pytest "${PYTEST_ARGS[@]}"
 
       - name: Generate badge
-        run: uv run -- coverage-badge -o htmlcov/badge.svg
+        run: uv run -- genbadge coverage -i coverage.xml -o htmlcov/badge.svg
 
       - name: Upload test report
         uses: https://git.pvv.ntnu.no/Projects/rsync-action@v1

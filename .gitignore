@@ -6,6 +6,7 @@ __pycache__/
 # Build and test system outputs
 .coverage
 .coverage.*
+coverage.xml
 dist/
 htmlcov
 src/worblehat/_version.py

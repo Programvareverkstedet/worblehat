@@ -4,6 +4,8 @@
 
 # Worblehat
 
+[![Coverage](https://pages.pvv.ntnu.no/Projects/worblehat/main/coverage/badge.svg)](https://pages.pvv.ntnu.no/Projects/worblehat/main/coverage)
+
 More information on  <https://www.pvv.ntnu.no/pvv/Bokhyllen/Worblehat/>
 
 ## What?
