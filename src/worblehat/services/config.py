@@ -37,7 +37,7 @@ DATABASE_POSTGRESQL_SCHEMA: dict[str, ConfigField] = {
     "host": ConfigField(str),
     "port": ConfigField(int),
     "username": ConfigField(str),
-    "password": ConfigField(str),
+    "password": ConfigField(str, default=None),
     "database": ConfigField(str),
 }
 
@@ -98,11 +98,14 @@ class Config:
 
     @staticmethod
     def read_password(password_field: str) -> str:
-        if Path(password_field).is_file():
-            with Path(password_field).open() as f:
-                return f.read().strip()
-        else:
+        if not password_field.startswith("/"):
             return password_field
+
+        try:
+            return Path(password_field).read_text().strip()
+        except OSError as err:
+            print(f"Error: could not read password file '{password_field}': {err}")
+            exit(1)
 
     @classmethod
     def _locate_configuration_file(cls) -> Path | None:
@@ -141,11 +144,18 @@ class Config:
             host = db_config.get("host")
             port = db_config.get("port")
             username = db_config.get("username")
-            password = cls.read_password(db_config.get("password"))
             database = db_config.get("database")
+
+            password_field = db_config.get("password")
+            credentials = (
+                f"{username}:{cls.read_password(password_field)}"
+                if password_field is not None
+                else username
+            )
+
             if host.startswith("/"):
-                return f"postgresql+psycopg2://{username}:{password}@/{database}?host={host}"
-            return f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}"
+                return f"postgresql+psycopg2://{credentials}@/{database}?host={host}"
+            return f"postgresql+psycopg2://{credentials}@{host}:{port}/{database}"
         print(f"Error: unknown database type '{db_config.get('type')}'")
         exit(1)
 
@@ -163,9 +173,14 @@ class Config:
             port = db_config.get("port")
             username = db_config.get("username")
             database = db_config.get("database")
+
+            credentials = (
+                f"{username}:<password>" if db_config.get("password") is not None else username
+            )
+
             if host.startswith("/"):
-                return f"postgresql+psycopg2://{username}:<password>@/{database}?host={host}"
-            return f"postgresql+psycopg2://{username}:<password>@{host}:{port}/{database}"
+                return f"postgresql+psycopg2://{credentials}@/{database}?host={host}"
+            return f"postgresql+psycopg2://{credentials}@{host}:{port}/{database}"
         print(f"Error: unknown database type '{db_config.get('type')}'")
         exit(1)
 
@@ -187,7 +202,8 @@ class Config:
             return data
         for key, field in schema.items():
             if key not in data:
-                errors.append(f"Missing required config key: {path}.{key}")
+                if field.default is _REQUIRED:
+                    errors.append(f"Missing required config key: {path}.{key}")
                 continue
             if not isinstance(data[key], field.type):
                 errors.append(f"Config key {path}.{key} must be of type {field.type.__name__}")

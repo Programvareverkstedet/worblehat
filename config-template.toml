@@ -13,8 +13,11 @@ path = './worblehat.sqlite'
 host = 'localhost'
 port = 5432
 username = 'worblehat'
-password = '/var/lib/worblehat/db-password' # path or plain text
 database = 'worblehat'
+# path or plain text
+# you may omit for passwordless auth (i.e. peer auth over a unix socket)
+# password = '/var/lib/worblehat/db-password'
+# password = 'hunter2'
 
 # See https://flask.palletsprojects.com/en/2.3.x/config/
 [flask]
