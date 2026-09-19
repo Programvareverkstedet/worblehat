@@ -6,8 +6,7 @@ from .BookcaseShelf import BookcaseShelf
 from .BorrowingLog import BorrowingLog
 from .Category import Category
 from .DeadlineDaemonLastRunDatetime import DeadlineDaemonLastRunDatetime
-from .enums import BorrowingEventType, QueueEventType
-from .Language import Language
+from .enums import BorrowingEventType, Language, QueueEventType
 from .MediaType import MediaType
 from .projections import Borrowing, QueuePosition
 from .QueueLog import QueueLog

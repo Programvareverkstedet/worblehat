@@ -1,6 +1,4 @@
-import csv
 from datetime import datetime, timedelta
-from pathlib import Path
 
 from sqlalchemy.orm import Session
 
@@ -13,7 +11,6 @@ from ..models import (
     BookcaseShelf,
     BorrowingEventType,
     BorrowingLog,
-    Language,
     MediaType,
     QueueEventType,
     QueueLog,
@@ -309,14 +306,9 @@ def seed_data(sql_session: Session = db.session) -> None:
         QueueLog("user", borrowed_book_people_in_queue, QueueEventType.JOINED),
     ]
 
-    with (Path(__file__).parent.parent.parent / "data" / "iso639_1.csv").open() as f:
-        reader = csv.reader(f)
-        languages = [Language(name, code) for (code, name) in reader]
-
     sql_session.add_all(media_types)
     sql_session.add_all(bookcases)
     sql_session.add_all(shelfs)
-    sql_session.add_all(languages)
     sql_session.add_all(authors)
     sql_session.add_all(books)
     sql_session.add_all(borrowings)

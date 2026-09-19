@@ -60,10 +60,7 @@ class BookcaseItemCli(NumberedCmd):
         return _selected_bookcase_item_prompt(self.bookcase_item)
 
     def do_update_data(self, _: str) -> None:
-        item = create_bookcase_item_from_isbn(
-            str(self.bookcase_item.isbn),
-            self.sql_session,
-        )
+        item = create_bookcase_item_from_isbn(str(self.bookcase_item.isbn))
 
         if item is None:
             print("Error: could not fetch metadata for this item")
@@ -299,7 +296,13 @@ class EditBookcaseCli(NumberedCmd):
         language_selector = InteractiveItemSelector(
             Language,
             self.sql_session,
+            execute_selection=lambda _session, cls, arg: [m for m in cls if m.name == arg.upper()],
+            complete_selection=lambda _session, cls, text: [
+                m.name for m in cls if m.name.startswith(text.upper())
+            ],
+            default=self.bookcase_item.language,
         )
+        language_selector.cmdloop()
 
         self.bookcase_item.language = language_selector.result
         self.sql_session.flush()

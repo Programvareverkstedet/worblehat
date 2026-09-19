@@ -139,7 +139,7 @@ class WorblehatCli(NumberedCmd):
                 )
 
     def _create_bookcase_item(self, isbn: str) -> None:
-        bookcase_item = create_bookcase_item_from_isbn(isbn, self.sql_session)
+        bookcase_item = create_bookcase_item_from_isbn(isbn)
         if bookcase_item is None:
             print(f"Could not find data about item with ISBN {isbn} online.")
             print(

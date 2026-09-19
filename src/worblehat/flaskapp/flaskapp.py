@@ -22,7 +22,7 @@ def create_app(args: dict[str, any] | None = None):
     db.init_app(app)
 
     with app.app_context():
-        if not inspect(db.engine).has_table("Bookcase"):
+        if not inspect(db.engine).has_table("bookcase"):
             Base.metadata.create_all(db.engine)
             seed_data()
 
@@ -40,5 +40,4 @@ def configure_admin(app) -> None:
     admin.add_view(ModelView(BookcaseItem, db.session))
     admin.add_view(ModelView(BookcaseShelf, db.session))
     admin.add_view(ModelView(Category, db.session))
-    admin.add_view(ModelView(Language, db.session))
     admin.add_view(ModelView(MediaType, db.session))

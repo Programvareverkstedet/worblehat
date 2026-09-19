@@ -1,6 +1,4 @@
 import isbnlib
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 from worblehat.book_data_fetchers import fetch_book_data_from_multiple_sources
 
@@ -28,14 +26,9 @@ def is_valid_isbn(isbn: str) -> bool:
     )
 
 
-def create_bookcase_item_from_isbn(
-    isbn: str,
-    sql_session: Session,
-) -> BookcaseItem | None:
+def create_bookcase_item_from_isbn(isbn: str) -> BookcaseItem | None:
     """
     This function fetches metadata for the given ISBN and creates a BookcaseItem from it.
-    It does so using a database connection to connect it to the correct authors and language
-    through the sql ORM.
 
     If no metadata is found, None is returned.
 
@@ -58,8 +51,9 @@ def create_bookcase_item_from_isbn(
             bookcase_item.authors.add(Author(author))
 
     if language := metadata.language:
-        bookcase_item.language = sql_session.scalars(
-            select(Language).where(Language.iso639_1_code == language),
-        ).one()
+        try:
+            bookcase_item.language = Language(language)
+        except ValueError:
+            raise ValueError(f"Unrecognized ISO 639-1 language code: {language!r}") from None
 
     return bookcase_item

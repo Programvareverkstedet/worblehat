@@ -7,12 +7,10 @@ from worblehat.models import (
     Bookcase,
     BookcaseItem,
     BookcaseShelf,
-    Language,
     MediaType,
 )
 
 CSV_FILE = Path(__file__).parent.parent.parent.parent / "data" / "arbeidsrom_smal_hylle_5.csv"
-LANGUAGE_FILE = Path(__file__).parent.parent.parent.parent / "data" / "iso639_1.csv"
 
 
 def clear_db(sql_session: Session) -> None:
@@ -20,7 +18,6 @@ def clear_db(sql_session: Session) -> None:
     sql_session.query(BookcaseShelf).delete()
     sql_session.query(Bookcase).delete()
     sql_session.query(MediaType).delete()
-    sql_session.query(Language).delete()
     sql_session.commit()
 
 
@@ -32,12 +29,6 @@ def main(sql_session: Session) -> None:
         description="A book",
     )
     sql_session.add(media_type)
-
-    with LANGUAGE_FILE.open(newline="") as langs:
-        t = csv.reader(langs, delimiter=",", quotechar="|")
-        for row in t:
-            language = Language(name=row[1], iso639_1_code=row[0])
-            sql_session.add(language)
 
     seed_case = Bookcase(
         name="seed_case",
@@ -71,7 +62,6 @@ def main(sql_session: Session) -> None:
                 name=row[1],
             )
             item.media_type = media_type
-            item.language = language
             bookcase_items.append(item)
 
     half = len(bookcase_items) // 2
