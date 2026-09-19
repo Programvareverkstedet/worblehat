@@ -154,6 +154,8 @@ class WorblehatCli(NumberedCmd):
             """),
         )
 
+        self.sql_session.add(bookcase_item)
+
         print("Please select the bookcase where the item is placed:")
         bookcase_selector = InteractiveItemSelector(
             cls=Bookcase,
@@ -186,7 +188,6 @@ class WorblehatCli(NumberedCmd):
         if username != "":
             bookcase_item.owner = username
 
-        self.sql_session.add(bookcase_item)
         self.sql_session.flush()
 
     def default(self, isbn: str) -> None:
