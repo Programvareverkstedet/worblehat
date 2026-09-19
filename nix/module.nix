@@ -155,6 +155,10 @@ in {
 
             User = "worblehat";
             Group = "worblehat";
+            StateDirectory = [
+              "worblehat"
+              "worblehat/crashdumps"
+            ];
 
             ExecStartPre = [
               "-${lib.getExe' cfg.screenPackage "screen"} -X -S worblehat kill"
@@ -224,6 +228,7 @@ in {
 
           User = "worblehat";
           Group = "worblehat";
+          StateDirectory = "worblehat";
         };
       };
     })
