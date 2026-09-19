@@ -9,7 +9,7 @@ license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-  "alembic>=1.16",
+  "alembic[tz]>=1.16",
   "beautifulsoup4>=4.14",
   "click>=8.2",
   "flask-admin>=1.6",

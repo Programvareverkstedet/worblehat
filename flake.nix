@@ -40,6 +40,7 @@
       isbnlib
       libdib
       psycopg2-binary
+      python-dateutil
       python-dotenv
       requests
       sqlalchemy
