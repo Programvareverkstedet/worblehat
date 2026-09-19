@@ -33,7 +33,7 @@ def _connect_to_database(**engine_args) -> Session:
         print(err)
         exit(1)
 
-    print(f"Debug: Connected to database at '{Config.db_string()}'")
+    print(f"Debug: Connected to database at '{Config.db_string_no_password()}'")
     return sql_session
 
 
