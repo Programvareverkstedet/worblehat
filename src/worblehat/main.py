@@ -55,6 +55,10 @@ def main() -> None:
         print(f"Configuration:\n{pformat(vars(args))}")
         exit(0)
 
+    if args.command == "validate-config":
+        print("Configuration is valid.")
+        exit(0)
+
     if args.command == "deadline-daemon":
         sql_session = _connect_to_database(echo=Config["logging.debug_sql"])
         DeadlineDaemon(sql_session).run()

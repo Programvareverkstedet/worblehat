@@ -28,6 +28,10 @@ subparsers.add_parser(
     help="Start the command line interface",
 )
 subparsers.add_parser(
+    "validate-config",
+    help="Validate the configuration file and exit",
+)
+subparsers.add_parser(
     "flask-dev",
     help="Start the web interface in development mode",
 )
