@@ -46,8 +46,6 @@ from .deadline_daemon import (
     list_overdue_queue_positions,
     list_undelivered_overdue_borrowings,
 )
-from .media_type import find_media_type_by_name
-
 __all__ = [
     "borrow_item",
     "claim_borrowing_queue_position",
@@ -57,7 +55,6 @@ __all__ = [
     "find_bookcase_item_by_name",
     "find_bookcase_shelf",
     "find_last_run",
-    "find_media_type_by_name",
     "find_next_queue_position",
     "get_active_borrowing",
     "get_queue_position",

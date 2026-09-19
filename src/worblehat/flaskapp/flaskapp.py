@@ -40,4 +40,3 @@ def configure_admin(app) -> None:
     admin.add_view(ModelView(BookcaseItem, db.session))
     admin.add_view(ModelView(BookcaseShelf, db.session))
     admin.add_view(ModelView(Category, db.session))
-    admin.add_view(ModelView(MediaType, db.session))

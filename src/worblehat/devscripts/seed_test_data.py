@@ -17,18 +17,11 @@ def clear_db(sql_session: Session) -> None:
     sql_session.query(BookcaseItem).delete()
     sql_session.query(BookcaseShelf).delete()
     sql_session.query(Bookcase).delete()
-    sql_session.query(MediaType).delete()
     sql_session.commit()
 
 
 def main(sql_session: Session) -> None:
     clear_db(sql_session)
-
-    media_type = MediaType(
-        name="Book",
-        description="A book",
-    )
-    sql_session.add(media_type)
 
     seed_case = Bookcase(
         name="seed_case",
@@ -61,7 +54,7 @@ def main(sql_session: Session) -> None:
                 isbn=row[0],
                 name=row[1],
             )
-            item.media_type = media_type
+            item.media_type = MediaType.BOOK
             bookcase_items.append(item)
 
     half = len(bookcase_items) // 2

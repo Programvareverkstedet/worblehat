@@ -19,19 +19,6 @@ from ..queries.borrowing import DEFAULT_LOAN_DAYS
 
 
 def seed_data(sql_session: Session = db.session) -> None:
-    media_types = [
-        MediaType(name="Book", description="A physical book"),
-        MediaType(name="Comic", description="A comic book"),
-        MediaType(
-            name="Video Game",
-            description="A digital game for computers or games consoles",
-        ),
-        MediaType(
-            name="Tabletop Game",
-            description="A physical game with cards, boards or similar",
-        ),
-    ]
-
     bookcases = [
         Bookcase(name="Unnamed A", description="White case across dibbler"),
         Bookcase(name="Unnamed B", description="Math case in the working room"),
@@ -210,7 +197,7 @@ def seed_data(sql_session: Session = db.session) -> None:
         isbn="9780201896831",
     )
     book1.authors.add(authors[0])
-    book1.media_type = media_types[0]
+    book1.media_type = MediaType.BOOK
     book1.shelf = shelfs[59]
 
     book2 = BookcaseItem(
@@ -218,7 +205,7 @@ def seed_data(sql_session: Session = db.session) -> None:
         isbn="9780747532743",
     )
     book2.authors.add(authors[1])
-    book2.media_type = media_types[0]
+    book2.media_type = MediaType.BOOK
     book2.shelf = shelfs[-1]
 
     book_owned_by_other_user = BookcaseItem(
@@ -228,7 +215,7 @@ def seed_data(sql_session: Session = db.session) -> None:
 
     book_owned_by_other_user.owner = "other_user"
     book_owned_by_other_user.authors.add(authors[4])
-    book_owned_by_other_user.media_type = media_types[0]
+    book_owned_by_other_user.media_type = MediaType.BOOK
     book_owned_by_other_user.shelf = shelfs[-2]
 
     borrowed_book_more_available = BookcaseItem(
@@ -236,7 +223,7 @@ def seed_data(sql_session: Session = db.session) -> None:
         isbn="9780747532745",
     )
     borrowed_book_more_available.authors.add(authors[5])
-    borrowed_book_more_available.media_type = media_types[0]
+    borrowed_book_more_available.media_type = MediaType.BOOK
     borrowed_book_more_available.shelf = shelfs[-3]
     borrowed_book_more_available.amount = 2
 
@@ -245,7 +232,7 @@ def seed_data(sql_session: Session = db.session) -> None:
         isbn="9780747532746",
     )
     borrowed_book_no_more_available.authors.add(authors[5])
-    borrowed_book_no_more_available.media_type = media_types[0]
+    borrowed_book_no_more_available.media_type = MediaType.BOOK
     borrowed_book_no_more_available.shelf = shelfs[-3]
 
     borrowed_book_people_in_queue = BookcaseItem(
@@ -253,7 +240,7 @@ def seed_data(sql_session: Session = db.session) -> None:
         isbn="9780747532747",
     )
     borrowed_book_people_in_queue.authors.add(authors[5])
-    borrowed_book_people_in_queue.media_type = media_types[0]
+    borrowed_book_people_in_queue.media_type = MediaType.BOOK
     borrowed_book_people_in_queue.shelf = shelfs[-3]
 
     borrowed_book_by_slabbedask = BookcaseItem(
@@ -261,7 +248,7 @@ def seed_data(sql_session: Session = db.session) -> None:
         isbn="9780747532748",
     )
     borrowed_book_by_slabbedask.authors.add(authors[5])
-    borrowed_book_by_slabbedask.media_type = media_types[0]
+    borrowed_book_by_slabbedask.media_type = MediaType.BOOK
     borrowed_book_by_slabbedask.shelf = shelfs[-3]
 
     books = [
@@ -306,7 +293,6 @@ def seed_data(sql_session: Session = db.session) -> None:
         QueueLog("user", borrowed_book_people_in_queue, QueueEventType.JOINED),
     ]
 
-    sql_session.add_all(media_types)
     sql_session.add_all(bookcases)
     sql_session.add_all(shelfs)
     sql_session.add_all(authors)

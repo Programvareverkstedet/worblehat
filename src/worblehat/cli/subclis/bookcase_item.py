@@ -293,6 +293,7 @@ class EditBookcaseCli(NumberedCmd):
             self.sql_session.flush()
 
     def do_language(self, _: str) -> None:
+        # TODO: Make a enum item selector helper in libdib
         language_selector = InteractiveItemSelector(
             Language,
             self.sql_session,
@@ -308,12 +309,20 @@ class EditBookcaseCli(NumberedCmd):
         self.sql_session.flush()
 
     def do_media_type(self, _: str) -> None:
+      # TODO: Use said helper function here too
         media_type_selector = InteractiveItemSelector(
             MediaType,
             self.sql_session,
+            execute_selection=lambda _session, cls, arg: [m for m in cls if m.name == arg.upper()],
+            complete_selection=lambda _session, cls, text: [
+                m.name for m in cls if m.name.startswith(text.upper())
+            ],
+            default=self.bookcase_item.media_type,
         )
+        media_type_selector.cmdloop()
 
-        self.bookcase_item.media_type = media_type_selector.result
+        if media_type_selector.result is not None:
+            self.bookcase_item.media_type = media_type_selector.result
         self.sql_session.flush()
 
     def do_amount(self, _: str) -> None:

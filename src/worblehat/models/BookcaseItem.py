@@ -18,7 +18,7 @@ from sqlalchemy.orm import (
 )
 
 from .Base import Base
-from .enums import Language, LanguageSQL
+from .enums import Language, LanguageSQL, MediaType, MediaTypeSQL
 from .mixins import (
     UidMixin,
 )
@@ -32,7 +32,6 @@ if TYPE_CHECKING:
     from .BookcaseShelf import BookcaseShelf
     from .BorrowingLog import BorrowingLog
     from .Category import Category
-    from .MediaType import MediaType
     from .projections import Borrowing, QueuePosition
     from .QueueLog import QueueLog
 
@@ -45,11 +44,10 @@ class BookcaseItem(Base, UidMixin):
     owner: Mapped[str] = mapped_column(String, default="PVV")
     amount: Mapped[int] = mapped_column(SmallInteger, default=1)
 
-    fk_media_type_uid: Mapped[int] = mapped_column(ForeignKey("media_type.uid"))
     fk_bookcase_shelf_uid: Mapped[int] = mapped_column(ForeignKey("bookcase_shelf.uid"))
+    media_type: Mapped[MediaType] = mapped_column(MediaTypeSQL)
     language: Mapped[Language | None] = mapped_column(LanguageSQL, default=None)
 
-    media_type: Mapped[MediaType] = relationship(back_populates="items")
     shelf: Mapped[BookcaseShelf] = relationship(back_populates="items")
 
     borrowing_log: WriteOnlyMapped[BorrowingLog] = relationship(back_populates="item")

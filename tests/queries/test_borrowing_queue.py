@@ -24,14 +24,13 @@ def _make_bookcase_item(
     isbn: str = "1234567890",
 ) -> BookcaseItem:
     """Creates a BookcaseItem along with the MediaType/Bookcase/BookcaseShelf it needs."""
-    media_type = MediaType(name=f"Media type for {name}")
     bookcase = Bookcase(name=f"Bookcase for {name}")
     shelf = BookcaseShelf(row=0, column=0, bookcase=bookcase)
-    sql_session.add_all([media_type, bookcase, shelf])
+    sql_session.add_all([bookcase, shelf])
     sql_session.flush()
 
     item = BookcaseItem(name, isbn)
-    item.media_type = media_type
+    item.media_type = MediaType.BOOK
     item.shelf = shelf
     sql_session.add(item)
     sql_session.flush()

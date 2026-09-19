@@ -17,7 +17,6 @@ from sqlalchemy.orm import Session
 from worblehat.models import *
 from worblehat.queries import (
     find_bookcase_item_by_isbn,
-    find_media_type_by_name,
     list_active_borrowings,
     list_all_queue_items,
     list_overdue_borrowings,
@@ -171,7 +170,11 @@ class WorblehatCli(NumberedCmd):
         media_type_selector = InteractiveItemSelector(
             cls=MediaType,
             sql_session=self.sql_session,
-            default=find_media_type_by_name(self.sql_session, "book"),
+            execute_selection=lambda _session, cls, arg: [m for m in cls if m.name == arg.upper()],
+            complete_selection=lambda _session, cls, text: [
+                m.name for m in cls if m.name.startswith(text.upper())
+            ],
+            default=MediaType.BOOK,
         )
 
         media_type_selector.cmdloop()

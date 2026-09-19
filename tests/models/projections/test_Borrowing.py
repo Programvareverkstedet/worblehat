@@ -14,14 +14,13 @@ from worblehat.models import (
 
 
 def _make_bookcase_item(sql_session: Session) -> BookcaseItem:
-    media_type = MediaType(name="Book")
     bookcase = Bookcase(name="Bookcase")
     shelf = BookcaseShelf(row=0, column=0, bookcase=bookcase)
-    sql_session.add_all([media_type, bookcase, shelf])
+    sql_session.add_all([bookcase, shelf])
     sql_session.flush()
 
     item = BookcaseItem("Some Book", "1234567890")
-    item.media_type = media_type
+    item.media_type = MediaType.BOOK
     item.shelf = shelf
     sql_session.add(item)
     sql_session.flush()
