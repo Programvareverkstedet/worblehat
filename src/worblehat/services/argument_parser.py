@@ -24,6 +24,10 @@ subparsers.add_parser(
     help="Create the database schema in the database specified in the configuration",
 )
 subparsers.add_parser(
+    "migrate",
+    help="Upgrade the database schema to the latest revision using alembic",
+)
+subparsers.add_parser(
     "cli",
     help="Start the command line interface",
 )

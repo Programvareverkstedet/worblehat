@@ -121,24 +121,6 @@ in {
             ensureClauses.login = true;
           }];
         };
-
-        systemd.services.worblehat-setup-database = lib.mkIf cfg.createLocalDatabase {
-          description = "Dibbler database setup";
-          wantedBy = [ "default.target" ];
-          after = [ "postgresql.service" ];
-          unitConfig = {
-            ConditionPathExists = "!/var/lib/worblehat/.db-setup-done";
-          };
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = "${lib.getExe cfg.package} --config /etc/worblehat/config.toml create-db";
-            ExecStartPost = "${lib.getExe' pkgs.coreutils "touch"} /var/lib/worblehat/.db-setup-done";
-            StateDirectory = "worblehat";
-
-            User = "worblehat";
-            Group = "worblehat";
-          };
-        };
       }
       (lib.mkIf cfg.kioskMode {
         boot.kernelParams = [
@@ -162,12 +144,8 @@ in {
           wantedBy = [
             "default.target"
           ];
-          after = if cfg.createLocalDatabase then [
-            "postgresql.service"
-            "worblehat-setup-database.service"
-          ] else [
-            "network.target"
-          ];
+          after = [ "network.target" ]
+          ++ lib.optionals cfg.createLocalDatabase [ "postgresql.service" ];
           serviceConfig = {
             Type = "forking";
             RemainAfterExit = false;
@@ -178,7 +156,10 @@ in {
             User = "worblehat";
             Group = "worblehat";
 
-            ExecStartPre = "-${lib.getExe' cfg.screenPackage "screen"} -X -S worblehat kill";
+            ExecStartPre = [
+              "-${lib.getExe' cfg.screenPackage "screen"} -X -S worblehat kill"
+              "${lib.getExe cfg.package} --config /etc/worblehat/config.toml migrate"
+            ];
             ExecStart = let
               screenArgs = lib.escapeShellArgs [
                 # -dm creates the screen in detached mode without accessing it
@@ -224,10 +205,11 @@ in {
         };
       };
 
+      # NOTE: this expects the database to be set up and migrated correctly.
       systemd.services.worblehat-deadline-daemon = {
         description = "Worblehat Deadline Daemon";
         wantedBy = [ "multi-user.target" ];
-        after = [ "network.target" ];
+        after = [ "network.target" ] ++ lib.optionals cfg.createLocalDatabase [ "postgresql.service" ];
         serviceConfig = {
           Type = "oneshot";
           NotifyAccess = "main";

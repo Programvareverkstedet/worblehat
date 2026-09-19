@@ -77,6 +77,17 @@ def main() -> None:
         print(f"Database schema created at '{Config.db_string_no_password()}'")
         exit(0)
 
+    if args.command == "migrate":
+        from alembic import command
+        from alembic.config import Config as AlembicConfig
+
+        alembic_cfg = AlembicConfig()
+        alembic_cfg.set_main_option("script_location", "worblehat.models:migrations")
+        alembic_cfg.set_main_option("sqlalchemy.url", Config.db_string())
+        command.upgrade(alembic_cfg, "head")
+        print(f"Database schema upgraded at '{Config.db_string_no_password()}'")
+        exit(0)
+
     if args.command == "devscripts":
         sql_session = _connect_to_database(echo=Config["logging.debug_sql"])
         if args.script == "seed-content-for-deadline-daemon":

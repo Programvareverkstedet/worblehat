@@ -79,6 +79,10 @@ class Config:
         Path("/etc/worblehat/config.toml"),
     ]
 
+    @classmethod
+    def is_loaded(cls) -> bool:
+        return cls._config is not None
+
     def __class_getitem__(cls, name: str) -> Any:
         if cls._config is None:
             raise RuntimeError(
@@ -110,10 +114,12 @@ class Config:
     @classmethod
     def _load_configuration_from_file(
         cls,
-        config_file_path: str | None,
+        config_file_path: str | Path | None,
     ) -> dict[str, Any]:
         if config_file_path is None:
             config_file_path = cls._locate_configuration_file()
+        elif isinstance(config_file_path, str):
+            config_file_path = Path(config_file_path)
 
         if config_file_path is None:
             print("Error: could not locate configuration file.")
