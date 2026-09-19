@@ -1,6 +1,6 @@
 from logging.config import fileConfig
 
-from alembic import context
+from alembic import command, context
 from sqlalchemy import engine_from_config, pool
 
 from worblehat.models import Base
@@ -31,6 +31,14 @@ def _process_revision_directives(context, revision, directives) -> None:
             print("No changes in schema detected. Not generating migration.")
 
 
+def _is_upgrade_or_downgrade() -> bool:
+    cmd_opts = config.cmd_opts
+    if cmd_opts is None:
+        return True
+    cmd = getattr(cmd_opts, "cmd", None)
+    return cmd is not None and cmd[0] in (command.upgrade, command.downgrade)
+
+
 def run_migrations_online() -> None:
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
@@ -52,8 +60,16 @@ def run_migrations_online() -> None:
             process_revision_directives=_process_revision_directives,
         )
 
+        apply_triggers = _is_upgrade_or_downgrade()
+
         with context.begin_transaction():
+            if apply_triggers:
+                Base.metadata.dispatch.before_drop(Base.metadata, connection)
+
             context.run_migrations()
+
+            if apply_triggers:
+                Base.metadata.dispatch.after_create(Base.metadata, connection)
 
 
 # We don't have any good reasons to generate raw sql migrations,
