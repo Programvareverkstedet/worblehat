@@ -52,7 +52,13 @@ class DeadlineDaemon:
             return
 
         notify_status("Deadline daemon started")
-        logging.info("Deadline daemon started")
+        logging.info(
+            "Deadline daemon started",
+            extra={
+                "last_run": self.last_run_datetime.isoformat(),
+                "current_run": self.current_run_datetime.isoformat(),
+            },
+        )
 
         if Config["deadline_daemon.dryrun"]:
             logging.warning("Running in dryrun mode")
@@ -64,6 +70,10 @@ class DeadlineDaemon:
         self.auto_expire_queue_positions()
 
         notify_status("Recording last run time")
+        logging.info(
+            "Recording last run time",
+            extra={"last_run": self.current_run_datetime.isoformat()},
+        )
         self.last_run.time = self.current_run_datetime
         self.sql_session.commit()
 
@@ -77,7 +87,14 @@ class DeadlineDaemon:
 
     def _send_close_deadline_mail(self, borrowing: Borrowing) -> None:
         logging.info(
-            f"Sending close deadline mail to {borrowing.username}@pvv.ntnu.no.",
+            f"Sending close deadline mail to {borrowing.username}@pvv.ntnu.no",
+            extra={
+                "item_uid": borrowing.fk_bookcase_item_uid,
+                "username": borrowing.username,
+                "item_isbn": borrowing.item.isbn,
+                "item_name": borrowing.item.name,
+                "deadline": borrowing.due_time.isoformat(),
+            },
         )
         send_email(
             f"{borrowing.username}@pvv.ntnu.no",
@@ -96,6 +113,13 @@ class DeadlineDaemon:
     def _send_overdue_mail(self, borrowing: Borrowing) -> None:
         logging.info(
             f"Sending overdue mail to {borrowing.username}@pvv.ntnu.no for {borrowing.item.isbn} - {borrowing.due_time.strftime('%a %b %d, %Y')}",
+            extra={
+                "item_uid": borrowing.fk_bookcase_item_uid,
+                "username": borrowing.username,
+                "item_isbn": borrowing.item.isbn,
+                "item_name": borrowing.item.name,
+                "deadline": borrowing.due_time.isoformat(),
+            },
         )
         send_email(
             f"{borrowing.username}@pvv.ntnu.no",
@@ -112,9 +136,18 @@ class DeadlineDaemon:
         )
 
     def _send_newly_available_mail(self, queue_item: QueuePosition) -> None:
-        logging.info(f"Sending newly available mail to {queue_item.username}")
-
         days_before_queue_expires = Config["deadline_daemon.days_before_queue_position_expires"]
+
+        logging.info(
+            f"Sending newly available mail to {queue_item.username} for {queue_item.item.name}",
+            extra={
+                "item_uid": queue_item.fk_bookcase_item_uid,
+                "username": queue_item.username,
+                "item_isbn": queue_item.item.isbn,
+                "item_name": queue_item.item.name,
+                "days_before_queue_expires": days_before_queue_expires,
+            },
+        )
 
         # TODO: calculate and format the date of when the queue position expires in the mail.
         send_email(
@@ -137,7 +170,14 @@ class DeadlineDaemon:
         day: int,
     ) -> None:
         logging.info(
-            f"Sending queue position expiry reminder to {queue_position.username}@pvv.ntnu.no.",
+            f"Sending queue position expiry reminder to {queue_position.username}@pvv.ntnu.no",
+            extra={
+                "item_uid": queue_position.fk_bookcase_item_uid,
+                "username": queue_position.username,
+                "item_isbn": queue_position.item.isbn,
+                "item_name": queue_position.item.name,
+                "warn_days_before_expiry": day,
+            },
         )
         send_email(
             f"{queue_position.username}@pvv.ntnu.no",
@@ -158,6 +198,16 @@ class DeadlineDaemon:
         queue_position: QueuePosition,
         remaining_queue_length: int,
     ) -> None:
+        logging.info(
+            f"Sending queue position expired mail to {queue_position.username}@pvv.ntnu.no",
+            extra={
+                "item_uid": queue_position.fk_bookcase_item_uid,
+                "username": queue_position.username,
+                "item_isbn": queue_position.item.isbn,
+                "item_name": queue_position.item.name,
+                "remaining_queue_length": remaining_queue_length,
+            },
+        )
         send_email(
             f"{queue_position.username}@pvv.ntnu.no",
             "Your queue position has expired",
@@ -220,6 +270,12 @@ class DeadlineDaemon:
         for queue_item in newly_available:
             logging.info(
                 f"Adding user {queue_item.username} to queue for {queue_item.item.name}",
+                extra={
+                    "item_uid": queue_item.fk_bookcase_item_uid,
+                    "username": queue_item.username,
+                    "item_isbn": queue_item.item.isbn,
+                    "item_name": queue_item.item.name,
+                },
             )
             notify_borrowing_queue_position(
                 self.sql_session,
@@ -266,6 +322,12 @@ class DeadlineDaemon:
         for queue_position in overdue_queue_positions:
             logging.info(
                 f"Expiring queue position for {queue_position.username} for item {queue_position.item.name}",
+                extra={
+                    "item_uid": queue_position.fk_bookcase_item_uid,
+                    "username": queue_position.username,
+                    "item_isbn": queue_position.item.isbn,
+                    "item_name": queue_position.item.name,
+                },
             )
 
             item = queue_position.item
@@ -290,6 +352,12 @@ class DeadlineDaemon:
 
                 logging.info(
                     f"Next user in queue for item {next_queue_position.item.name} is {next_queue_position.username}",
+                    extra={
+                        "item_uid": next_queue_position.fk_bookcase_item_uid,
+                        "username": next_queue_position.username,
+                        "item_isbn": next_queue_position.item.isbn,
+                        "item_name": next_queue_position.item.name,
+                    },
                 )
                 self._send_newly_available_mail(next_queue_position)
 
