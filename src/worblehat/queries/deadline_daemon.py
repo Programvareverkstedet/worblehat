@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 from sqlalchemy.sql.elements import SQLColumnExpression
 
 from worblehat.models import (
@@ -84,15 +84,26 @@ def list_newly_available_queue_items(
         .distinct()
     )
 
+    queue_position_rank = func.row_number().over(
+        partition_by=QueuePosition.fk_bookcase_item_uid,
+        order_by=QueuePosition.entered_queue_time,
+    )
+
+    ranked_queue_positions = (
+        select(QueuePosition, queue_position_rank.label("rank"))
+        .where(
+            QueuePosition.notified_available_time.is_(None),
+            QueuePosition.fk_bookcase_item_uid.in_(items_returned_since_last_run),
+        )
+        .subquery()
+    )
+    next_in_queue = aliased(QueuePosition, ranked_queue_positions)
+
     return list(
         sql_session.scalars(
-            select(QueuePosition)
-            .where(
-                QueuePosition.notified_available_time.is_(None),
-                QueuePosition.fk_bookcase_item_uid.in_(items_returned_since_last_run),
-            )
-            .order_by(QueuePosition.entered_queue_time)
-            .group_by(QueuePosition.fk_bookcase_item_uid),
+            select(next_in_queue)
+            .where(ranked_queue_positions.c.rank == 1)
+            .order_by(next_in_queue.entered_queue_time),
         ).all(),
     )
 
