@@ -75,13 +75,17 @@ def list_newly_available_queue_items(
     last_run_datetime: datetime,
     current_run_datetime: datetime,
 ) -> list[QueuePosition]:
-    items_returned_since_last_run = (
-        select(BorrowingLog.fk_bookcase_item_uid)
+    newly_freed_copies_per_item = (
+        select(
+            BorrowingLog.fk_bookcase_item_uid,
+            func.count().label("newly_freed_copies"),
+        )
         .where(
             BorrowingLog.event_type == BorrowingEventType.RETURNED,
             BorrowingLog.timestamp.between(last_run_datetime, current_run_datetime),
         )
-        .distinct()
+        .group_by(BorrowingLog.fk_bookcase_item_uid)
+        .subquery()
     )
 
     queue_position_rank = func.row_number().over(
@@ -91,10 +95,7 @@ def list_newly_available_queue_items(
 
     ranked_queue_positions = (
         select(QueuePosition, queue_position_rank.label("rank"))
-        .where(
-            QueuePosition.notified_available_time.is_(None),
-            QueuePosition.fk_bookcase_item_uid.in_(items_returned_since_last_run),
-        )
+        .where(QueuePosition.notified_available_time.is_(None))
         .subquery()
     )
     next_in_queue = aliased(QueuePosition, ranked_queue_positions)
@@ -102,7 +103,14 @@ def list_newly_available_queue_items(
     return list(
         sql_session.scalars(
             select(next_in_queue)
-            .where(ranked_queue_positions.c.rank == 1)
+            .join(
+                newly_freed_copies_per_item,
+                newly_freed_copies_per_item.c.fk_bookcase_item_uid
+                == ranked_queue_positions.c.fk_bookcase_item_uid,
+            )
+            .where(
+                ranked_queue_positions.c.rank <= newly_freed_copies_per_item.c.newly_freed_copies,
+            )
             .order_by(next_in_queue.entered_queue_time),
         ).all(),
     )

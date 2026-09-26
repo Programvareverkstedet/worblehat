@@ -241,6 +241,112 @@ def test_list_newly_available_queue_items_excludes_expired_queue_entries(
     assert result == []
 
 
+def test_list_newly_available_queue_items_returns_earliest_in_queue_when_multiple_queued(
+    sql_session: Session,
+) -> None:
+    item = _make_bookcase_item(sql_session)
+    now = datetime.now()
+
+    _borrow(sql_session, "alice", item)
+    _return(sql_session, "alice", item, timestamp=now)
+
+    first_in_line = _join_queue(
+        sql_session,
+        "bob",
+        item,
+        entered_queue_time=now - timedelta(days=2),
+    )
+    _join_queue(sql_session, "carol", item, entered_queue_time=now - timedelta(days=1))
+
+    result = list_newly_available_queue_items(
+        sql_session,
+        last_run_datetime=now - timedelta(minutes=1),
+        current_run_datetime=now + timedelta(minutes=1),
+    )
+
+    assert result == [first_in_line]
+
+
+def test_list_newly_available_queue_items_returns_one_per_item_when_multiple_items_have_queues(
+    sql_session: Session,
+) -> None:
+    now = datetime.now()
+
+    item_a = _make_bookcase_item(sql_session, name="Book A", isbn="1111111111")
+    _borrow(sql_session, "alice", item_a)
+    _join_queue(sql_session, "carol", item_a, entered_queue_time=now - timedelta(days=1))
+    _return(sql_session, "alice", item_a, timestamp=now)
+    a_first_in_line = _join_queue(
+        sql_session,
+        "bob",
+        item_a,
+        entered_queue_time=now - timedelta(days=2),
+    )
+
+    item_b = _make_bookcase_item(sql_session, name="Book B", isbn="2222222222")
+    _borrow(sql_session, "dave", item_b)
+    _join_queue(sql_session, "frank", item_b, entered_queue_time=now - timedelta(days=1))
+    _return(sql_session, "dave", item_b, timestamp=now)
+    b_first_in_line = _join_queue(
+        sql_session,
+        "erin",
+        item_b,
+        entered_queue_time=now - timedelta(days=3),
+    )
+
+    result = list_newly_available_queue_items(
+        sql_session,
+        last_run_datetime=now - timedelta(minutes=1),
+        current_run_datetime=now + timedelta(minutes=1),
+    )
+
+    assert set(result) == {a_first_in_line, b_first_in_line}
+
+
+def test_list_newly_available_queue_items_notifies_one_person_per_returned_copy(
+    sql_session: Session,
+) -> None:
+    item = _make_bookcase_item(sql_session)
+    item.amount = 2
+    sql_session.flush()
+
+    _borrow(sql_session, "alice", item)
+    _borrow(sql_session, "zoe", item)
+
+    now = datetime.now()
+
+    _return(sql_session, "alice", item, timestamp=now)
+    _return(sql_session, "zoe", item, timestamp=now)
+
+    first_in_line = _join_queue(
+        sql_session,
+        "bob",
+        item,
+        entered_queue_time=now - timedelta(days=3),
+    )
+    second_in_line = _join_queue(
+        sql_session,
+        "carol",
+        item,
+        entered_queue_time=now - timedelta(days=2),
+    )
+    third_in_line = _join_queue(
+        sql_session,
+        "dave",
+        item,
+        entered_queue_time=now - timedelta(days=1),
+    )
+
+    result = list_newly_available_queue_items(
+        sql_session,
+        last_run_datetime=now - timedelta(minutes=1),
+        current_run_datetime=now + timedelta(minutes=1),
+    )
+
+    assert result == [first_in_line, second_in_line]
+    assert third_in_line not in result
+
+
 def test_list_expiring_queue_positions_matches_positions_in_window(sql_session: Session) -> None:
     item = _make_bookcase_item(sql_session)
     now = datetime.now()
